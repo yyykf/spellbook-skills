@@ -1,0 +1,20 @@
+{
+  "name": "spellbook-marketplace",
+  "description": "Marketplace for Spellbook Skills",
+  "owner": {
+    "name": "code4j",
+    "email": "code4j@code4j.site"
+  },
+  "plugins": [
+    {
+      "name": "spellbook-skills",
+      "description": "Personal skills library for daily workflows (worktrees + branch finishing, compile-only)",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "code4j",
+        "email": "code4j@code4j.site"
+      }
+    }
+  ]
+}
