@@ -14,6 +14,17 @@ Create an isolated worktree from the current branch with a build/compile check i
 
 ## The Process
 
+### Step 0: Normalize to Repo Root (Avoid CWD Pitfalls)
+
+Worktrees are very sensitive to your current working directory (CWD) when you use relative paths like `.worktrees/...`.
+
+Always capture the repo root and ensure you are operating from there before creating worktrees:
+
+```bash
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+```
+
 ### Step 1: Capture Base Branch (Merge Target)
 
 ```bash
@@ -115,6 +126,16 @@ Base branch: <base-branch>
 Build/compile: <result>
 ```
 
+### Step 8: Return to Repo Root (Important)
+
+Unless the user explicitly asks you to stay in the worktree to debug, return to the repo root at the end.
+
+This prevents follow-up commands from accidentally running in the last worktree (and prevents creating nested worktrees due to relative paths).
+
+```bash
+cd "$repo_root"
+```
+
 ## Quick Reference
 
 | Step | Action |
@@ -123,6 +144,7 @@ Build/compile: <result>
 | Directory | Prefer `.worktrees/`, then `worktrees/`, else ask |
 | Safety | `git check-ignore` for project-local directories |
 | Build | Follow `AGENTS.md` or defaults; no tests |
+| CWD | Normalize to repo root; return at end |
 | Merge | Merge from the base-branch worktree, not the worktree branch |
 
 ## Common Mistakes
@@ -147,6 +169,10 @@ Build/compile: <result>
 - **Problem:** Base branch is already checked out elsewhere; merge fails
 - **Fix:** Merge from the base-branch worktree directory
 
+**Staying in the last worktree directory**
+- **Problem:** Follow-up tasks run in the wrong directory; relative worktree paths can create nested worktrees
+- **Fix:** Always `cd "$repo_root"` after setup/build unless debugging is needed
+
 ## Rationalization Table
 
 | Excuse | Reality |
@@ -166,6 +192,8 @@ Build/compile: <result>
 ```bash
 base_branch=$(git branch --show-current)
 # Confirm base_branch with user
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
 mkdir -p .worktrees
 path=.worktrees/feature-x
 branch_name=feature-x
@@ -175,4 +203,6 @@ cd "$path"
 
 npm install
 npm run -s build
+
+cd "$repo_root"
 ```
