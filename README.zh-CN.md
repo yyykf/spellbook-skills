@@ -46,6 +46,7 @@ Spellbook Skills 提供最小可用的并行开发流程：基于 git worktree�
 | `using-git-worktrees-lite` | 从当前分支创建 worktree，仅构建/编译校验（不跑测试） |
 | `finishing-a-development-branch-lite` | 以构建/编译为完成门槛，按选项合并/PR/保留/丢弃并清理 worktree |
 | `reviewing-gitlab-mr-comments` | 使用 glab 查看 GitLab MR 评论，汇总反馈并给出清单或计划后再执行 |
+| `yapi-skill` | 免服务查询 YApi：搜索接口与获取接口详情（Python 标准库脚本直连） |
 
 ## 路线图
 
