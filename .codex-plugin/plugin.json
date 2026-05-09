@@ -1,5 +1,6 @@
 {
   "name": "spellbook-skills",
+  "version": "0.2.0",
   "description": "Personal skills library for daily workflows (worktrees + branch finishing, compile-only)",
   "author": {
     "name": "code4j",
@@ -8,7 +9,6 @@
   "homepage": "https://github.com/code4j/spellbook-skills",
   "repository": "https://github.com/code4j/spellbook-skills",
   "license": "MIT",
-  "keywords": ["skills", "worktrees", "workflow", "claude-code", "plugin"],
-  "skills": "./skills",
-  "agents": "./agents"
+  "keywords": ["skills", "worktrees", "workflow", "claude-code", "codex", "plugin"],
+  "skills": "./skills/"
 }

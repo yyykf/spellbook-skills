@@ -1,0 +1,15 @@
+{
+  "files": [
+    { "path": ".codex-plugin/plugin.json", "field": "version" }
+  ],
+  "audit": {
+    "exclude": [
+      "CHANGELOG.md",
+      "node_modules",
+      ".git",
+      ".version-bump.json",
+      "scripts/bump-version.sh",
+      ".project_context"
+    ]
+  }
+}

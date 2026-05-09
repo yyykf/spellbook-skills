@@ -9,7 +9,6 @@
     {
       "name": "spellbook-skills",
       "description": "Personal skills library for daily workflows (worktrees + branch finishing, compile-only)",
-      "version": "0.1.0",
       "source": "./",
       "author": {
         "name": "code4j",

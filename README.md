@@ -6,13 +6,7 @@ Personal skills library for daily workflows, packaged as a Claude Code plugin.
 
 ## Overview
 
-Spellbook Skills provides a minimal, reliable workflow for parallel development using git worktrees and compile-only verification.
-
-## Features
-
-- Worktree creation from the current branch (no test run, build/compile only)
-- Completion flow that merges back to the original base branch
-- Clean worktree cleanup options (merge/PR/keep/discard)
+Spellbook Skills is a collection of Claude Code skills for daily development workflows — covering git worktrees, code review, API querying, DDD architecture guidance, and more.
 
 ## Requirements
 
@@ -36,8 +30,9 @@ Spellbook Skills provides a minimal, reliable workflow for parallel development 
 
 After installation, skills are namespaced by the plugin name:
 
-- `/spellbook-skills:using-git-worktrees-lite`
-- `/spellbook-skills:finishing-a-development-branch-lite`
+```
+/spellbook-skills:<skill-name>
+```
 
 ## Skills
 
@@ -47,6 +42,8 @@ After installation, skills are namespaced by the plugin name:
 | `finishing-a-development-branch-lite` | Use build/compile verification as the completion gate, then merge/PR/keep/discard and clean up the worktree |
 | `reviewing-gitlab-mr-comments` | Review GitLab MR comments via glab, summarize feedback, and propose a checklist or plan before execution |
 | `yapi-skill` | Query YApi without running an MCP server: search interfaces and fetch interface details via Python scripts |
+| `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found |
+| `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
 
 ## Roadmap
 
@@ -60,6 +57,7 @@ MIT. See [LICENSE](./LICENSE).
 
 Issues and PRs are welcome. Keep changes small and focused.
 
-## Attribution
+## Acknowledgments
 
-This repository is adapted from [superpowers](https://github.com/obra/superpowers). Thanks to the original project for the workflow and skill design.
+- This repository is adapted from [superpowers](https://github.com/obra/superpowers). Thanks to the original project for the skill framework and workflow design.
+- The `ddd-best-practices` skill draws on ideas and practices from [xfg-ddd-skills](https://github.com/fuzhengwei/xfg-ddd-skills). Thanks for the inspiration.
