@@ -44,6 +44,7 @@ After installation, skills are namespaced by the plugin name:
 | `yapi-skill` | Query YApi without running an MCP server: search interfaces and fetch interface details via Python scripts |
 | `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found |
 | `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
+| `git-merge-request` | One-shot commit + push + create merge request, supporting both GitHub Pull Requests and GitLab Merge Requests with auto-detected platform and repo-template-aware descriptions |
 
 ## Roadmap
 

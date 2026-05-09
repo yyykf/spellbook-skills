@@ -44,6 +44,7 @@ Spellbook Skills 是一组面向日常开发工作流的 Claude Code 技能集�
 | `yapi-skill` | 免服务查询 YApi：搜索接口与获取接口详情（Python 标准库脚本直连） |
 | `simplify` | 三维并行审查变更代码（复用性、质量、效率），自动修复发现的问题 |
 | `ddd-best-practices` | DDD 架构最佳实践（Java/Spring Boot）— 分层决策、领域建模、代码模板、测试策略、审查清单与 MVC 渐进迁移 |
+| `git-merge-request` | 一键提交 + 推送 + 创建合并请求，自动识别 GitHub / GitLab 远端，优先使用仓库内 PR/MR 模板 |
 
 ## 路线图
 
