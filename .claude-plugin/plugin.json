@@ -10,5 +10,9 @@
   "license": "MIT",
   "keywords": ["skills", "worktrees", "workflow", "claude-code", "plugin"],
   "skills": "./skills",
-  "agents": "./agents"
+  "agents": [
+    "./agents/code-efficiency-reviewer.md",
+    "./agents/code-quality-reviewer.md",
+    "./agents/code-reuse-reviewer.md"
+  ]
 }
