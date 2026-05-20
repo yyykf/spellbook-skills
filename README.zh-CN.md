@@ -1,16 +1,17 @@
 # Spellbook Skills
 
-面向日常工作流的个人技能仓库，提供 Claude Code 与 Codex 插件配置。
+面向日常工作流的个人技能仓库，提供 Claude Code、GitHub Copilot CLI 与 Codex 插件配置。
 
 [English README](./README.md)
 
 ## 概览
 
-Spellbook Skills 是一组面向日常开发工作流的 Claude Code 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。
+Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。
 
 ## 依赖
 
 - Claude Code v1.0.33+
+- GitHub Copilot CLI（用于 Copilot 插件、skill 与 agent）
 - Codex CLI（用于 Codex 插件与 Codex agent role）
 
 ## 安装到 Claude Code
@@ -31,6 +32,24 @@ claude plugin install spellbook-skills@spellbook-marketplace --scope user
 ```
 
 市场名称是 `spellbook-marketplace`，由 `.claude-plugin/marketplace.json` 声明。
+
+## 安装到 GitHub Copilot CLI
+
+GitHub Copilot CLI 可以直接安装同一个远程 marketplace，并复用 Claude 兼容的 `.claude-plugin/plugin.json`，因此会同时加载 `skills/` 和 `agents/`。
+
+```bash
+copilot plugin marketplace add yyykf/spellbook-skills
+copilot plugin install spellbook-skills@spellbook-marketplace
+```
+
+后续更新：
+
+```bash
+copilot plugin marketplace update spellbook-marketplace
+copilot plugin update spellbook-skills@spellbook-marketplace
+```
+
+该插件会提供共享 skills，以及 `.claude-plugin/plugin.json` 中声明的 reviewer agents。
 
 ## 安装到 Codex
 
