@@ -35,6 +35,14 @@ Launch all three agents concurrently in a single message. Pass each agent the fu
 | `code-quality-reviewer` | Finds hacky patterns that hurt maintainability |
 | `code-efficiency-reviewer` | Finds performance and resource issues |
 
+For Codex, if the Spellbook reviewer agent roles are available, use the namespaced role names:
+
+| Codex Agent Role | Role |
+|------------------|------|
+| `spellbook-code-reuse-reviewer` | Finds duplicated logic and missed existing utilities |
+| `spellbook-code-quality-reviewer` | Finds hacky patterns that hurt maintainability |
+| `spellbook-code-efficiency-reviewer` | Finds performance and resource issues |
+
 **Invocation example (Claude Code):**
 
 Use the Agent tool three times in a single message, each with the corresponding `subagent_type`:
@@ -48,6 +56,15 @@ Pass each agent a prompt like:
 > ```diff
 > <full diff here>
 > ```
+
+**Invocation example (Codex):**
+
+If the namespaced role names are available in the `spawn_agent` tool, launch all three agents concurrently with the corresponding `agent_type`:
+- `spellbook-code-reuse-reviewer`
+- `spellbook-code-quality-reviewer`
+- `spellbook-code-efficiency-reviewer`
+
+Pass each agent the same full diff.
 
 **For platforms without named agent support:** run the three reviews sequentially using each agent's checklist from their definitions.
 
