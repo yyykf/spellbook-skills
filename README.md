@@ -1,5 +1,17 @@
 # Spellbook Skills
 
+<p align="center">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable agent skills for daily engineering workflows" width="100%">
+</p>
+
+<p align="center">
+  <a href="./LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-c99a43"></a>
+  <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-c65c54">
+  <img alt="Codex plugin" src="https://img.shields.io/badge/Codex-plugin-16a394">
+  <img alt="GitHub Copilot CLI plugin" src="https://img.shields.io/badge/GitHub%20Copilot%20CLI-plugin-5578ff">
+  <img alt="Skills 8" src="https://img.shields.io/badge/skills-8-111820">
+</p>
+
 Personal skills library for daily workflows, packaged as Claude Code, GitHub Copilot CLI, and Codex plugins.
 
 [中文说明](./README.zh-CN.md)
@@ -7,6 +19,10 @@ Personal skills library for daily workflows, packaged as Claude Code, GitHub Cop
 ## Overview
 
 Spellbook Skills is a collection of agent skills for daily development workflows — covering git worktrees, code review, API querying, DDD architecture guidance, and more.
+
+<p align="center">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across MR comments, git flow, YApi, DDD, AGENTS.md, and simplify workflows" width="100%">
+</p>
 
 ## Requirements
 
