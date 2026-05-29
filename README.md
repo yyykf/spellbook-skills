@@ -117,6 +117,7 @@ After installation, skills are namespaced by the plugin name:
 | `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found. Codex uses the optional namespaced reviewer agents installed above. |
 | `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
 | `git-merge-request` | One-shot commit + push + create merge request, supporting both GitHub Pull Requests and GitLab Merge Requests with auto-detected platform and repo-template-aware descriptions |
+| `agents-md-improver` | Maintain concise AGENTS.md-based project instructions: audit current guidance, capture session learnings, and migrate useful CLAUDE.md rules into shared agent instructions |
 
 ## Roadmap
 
@@ -134,3 +135,4 @@ Issues and PRs are welcome. Keep changes small and focused.
 
 - This repository is adapted from [superpowers](https://github.com/obra/superpowers). Thanks to the original project for the skill framework and workflow design.
 - The `ddd-best-practices` skill draws on ideas and practices from [xfg-ddd-skills](https://github.com/fuzhengwei/xfg-ddd-skills). Thanks for the inspiration.
+- The `agents-md-improver` skill is inspired by Anthropic's [claude-md-management](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management), adapted for AGENTS.md-compatible coding agents.

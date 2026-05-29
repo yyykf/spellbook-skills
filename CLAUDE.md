@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file is the effective shared project instruction source. Root `AGENTS.md` imports it with `@./CLAUDE.md`, so update this file for shared agent-facing rules and keep platform-specific details in manifests or README files.
 
 ## If You Are an AI Agent
 
@@ -12,7 +12,7 @@ Before modifying any existing skill:
 
 ## Project Overview
 
-Personal skills library for Claude Code, packaged as a plugin for the Claude Code marketplace. Dual-platform support:
+Personal skills library for daily engineering workflows, packaged for multiple coding-agent tools. Plugin support:
 
 | Platform | Manifest | Version Strategy |
 |---|---|---|

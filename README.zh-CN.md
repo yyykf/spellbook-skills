@@ -117,6 +117,7 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 | `simplify` | 三维并行审查变更代码（复用性、质量、效率），自动修复发现的问题；Codex 可使用上面额外安装的带命名空间 reviewer agents |
 | `ddd-best-practices` | DDD 架构最佳实践（Java/Spring Boot）— 分层决策、领域建模、代码模板、测试策略、审查清单与 MVC 渐进迁移 |
 | `git-merge-request` | 一键提交 + 推送 + 创建合并请求，自动识别 GitHub / GitLab 远端，优先使用仓库内 PR/MR 模板 |
+| `agents-md-improver` | 维护简洁的 AGENTS.md 项目指令：审计现有指令、沉淀会话经验，并将有价值的 CLAUDE.md 规则迁移为共享 Agent 指令 |
 
 ## 路线图
 
@@ -134,3 +135,4 @@ MIT，详见 [LICENSE](./LICENSE)。
 
 - 本仓库参考并改写了 [superpowers](https://github.com/obra/superpowers) 的技能与流程设计，在此致谢。
 - `ddd-best-practices` 技能的设计灵感与实践经验来自 [xfg-ddd-skills](https://github.com/fuzhengwei/xfg-ddd-skills)，特此致谢。
+- `agents-md-improver` 技能参考了 Anthropic 的 [claude-md-management](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management)，并适配为面向 AGENTS.md 兼容编码 Agent 的通用指令维护流程。
