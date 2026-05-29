@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spellbook Skills Banner</title>
+    <style>
+      :root {
+        --ink: #11161d;
+        --ink-2: #161d25;
+        --paper: #f2eadb;
+        --paper-dim: #c9bea8;
+        --gold: #caa052;
+        --teal: #1da79b;
+        --blue: #4d80ff;
+        --red: #c75b56;
+        --line: rgba(242, 234, 219, 0.2);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0c1016;
+        font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      }
+
+      .banner {
+        position: relative;
+        width: 1600px;
+        height: 520px;
+        overflow: hidden;
+        color: var(--paper);
+        background:
+          linear-gradient(115deg, rgba(202, 160, 82, 0.18), transparent 28%),
+          linear-gradient(295deg, rgba(29, 167, 155, 0.14), transparent 32%),
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 72px),
+          repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 64px),
+          linear-gradient(135deg, #11161d 0%, #121922 52%, #0d1117 100%);
+        border: 1px solid rgba(242, 234, 219, 0.18);
+      }
+
+      .banner::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.34;
+        background-image:
+          linear-gradient(45deg, rgba(242, 234, 219, 0.08) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(242, 234, 219, 0.05) 25%, transparent 25%);
+        background-size: 8px 8px;
+        mix-blend-mode: screen;
+      }
+
+      .spine {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 210px;
+        height: 100%;
+        background:
+          linear-gradient(90deg, rgba(202, 160, 82, 0.34), transparent 65%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.05));
+        border-right: 1px solid rgba(242, 234, 219, 0.2);
+      }
+
+      .spine::before,
+      .spine::after {
+        content: "";
+        position: absolute;
+        left: 54px;
+        width: 102px;
+        height: 102px;
+        border: 1px solid rgba(242, 234, 219, 0.36);
+        transform: rotate(45deg);
+      }
+
+      .spine::before {
+        top: 64px;
+      }
+
+      .spine::after {
+        bottom: 64px;
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 605px 1fr;
+        gap: 40px;
+        height: 100%;
+        padding: 54px 72px 42px 270px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        width: fit-content;
+        height: 34px;
+        padding: 0 14px;
+        color: var(--gold);
+        border: 1px solid rgba(202, 160, 82, 0.42);
+        background: rgba(202, 160, 82, 0.08);
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 14px;
+        letter-spacing: 0;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 34px 0 18px;
+        font-family: "Iowan Old Style", "Georgia", serif;
+        font-size: 78px;
+        line-height: 0.96;
+        letter-spacing: 0;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        max-width: 560px;
+        margin: 0;
+        color: var(--paper-dim);
+        font-size: 25px;
+        line-height: 1.35;
+      }
+
+      .platforms {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 36px;
+      }
+
+      .platform {
+        display: inline-grid;
+        place-items: center;
+        min-width: 124px;
+        height: 38px;
+        padding: 0 16px;
+        color: #f8f4eb;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(242, 234, 219, 0.18);
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 15px;
+      }
+
+      .system {
+        position: relative;
+        display: grid;
+        grid-template-rows: 78px 1fr 64px;
+        gap: 14px;
+        align-self: center;
+      }
+
+      .command-bar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        height: 78px;
+        padding: 0 24px;
+        background: rgba(8, 12, 18, 0.64);
+        border: 1px solid var(--line);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+      }
+
+      .prompt {
+        font-family: "Menlo", "Consolas", monospace;
+        color: var(--paper-dim);
+        font-size: 19px;
+      }
+
+      .prompt strong {
+        color: var(--paper);
+        font-weight: 600;
+      }
+
+      .status {
+        width: 114px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        color: #081115;
+        background: var(--teal);
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .skill-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .card {
+        position: relative;
+        min-height: 104px;
+        padding: 16px 18px;
+        background:
+          linear-gradient(180deg, rgba(242, 234, 219, 0.09), rgba(242, 234, 219, 0.035)),
+          rgba(10, 15, 21, 0.68);
+        border: 1px solid rgba(242, 234, 219, 0.16);
+      }
+
+      .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+      }
+
+      .card:nth-child(1)::before,
+      .card:nth-child(4)::before {
+        background: var(--gold);
+      }
+
+      .card:nth-child(2)::before,
+      .card:nth-child(5)::before {
+        background: var(--teal);
+      }
+
+      .card:nth-child(3)::before,
+      .card:nth-child(6)::before {
+        background: var(--red);
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 22px;
+        line-height: 1;
+        letter-spacing: 0;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--paper-dim);
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .footer-strip {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 0 18px;
+        background: rgba(202, 160, 82, 0.1);
+        border: 1px solid rgba(202, 160, 82, 0.25);
+      }
+
+      .footer-strip span {
+        color: var(--paper-dim);
+        font-family: "Menlo", "Consolas", monospace;
+        font-size: 15px;
+      }
+
+      .footer-strip strong {
+        color: var(--paper);
+      }
+
+      .sigil {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        color: var(--gold);
+        border: 1px solid rgba(202, 160, 82, 0.5);
+        transform: rotate(45deg);
+      }
+
+      .sigil span {
+        color: var(--gold);
+        font-family: "Iowan Old Style", "Georgia", serif;
+        font-size: 24px;
+        transform: rotate(-45deg);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="banner" aria-label="Spellbook Skills banner">
+      <div class="spine" aria-hidden="true"></div>
+      <section class="content">
+        <div>
+          <div class="eyebrow">Claude Code + Codex + Copilot CLI</div>
+          <h1>Spellbook<br>Skills</h1>
+          <p class="subtitle">Reusable agent skills for daily engineering workflows, packaged once and shared across coding assistants.</p>
+          <div class="platforms" aria-label="Supported platforms">
+            <span class="platform">Claude Code</span>
+            <span class="platform">Codex</span>
+            <span class="platform">Copilot CLI</span>
+          </div>
+        </div>
+
+        <div class="system" aria-label="Skill coverage">
+          <div class="command-bar">
+            <div class="prompt">$ <strong>/spellbook-skills:&lt;workflow&gt;</strong></div>
+            <div class="status">READY</div>
+          </div>
+
+          <div class="skill-grid">
+            <article class="card">
+              <h2>Simplify</h2>
+              <p>parallel quality, reuse, and efficiency passes</p>
+            </article>
+            <article class="card">
+              <h2>MR Comments</h2>
+              <p>read GitLab feedback and turn it into a plan</p>
+            </article>
+            <article class="card">
+              <h2>Worktrees</h2>
+              <p>isolated branch work with build verification</p>
+            </article>
+            <article class="card">
+              <h2>YApi Lookup</h2>
+              <p>direct interface search without an MCP server</p>
+            </article>
+            <article class="card">
+              <h2>Java DDD</h2>
+              <p>layering, modeling, tests, and review guidance</p>
+            </article>
+            <article class="card">
+              <h2>AGENTS.md</h2>
+              <p>audit, migrate, and keep project instructions lean</p>
+            </article>
+          </div>
+
+          <div class="footer-strip">
+            <span><strong>one library</strong> for repeatable engineering judgment</span>
+            <div class="sigil" aria-hidden="true"><span>S</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
