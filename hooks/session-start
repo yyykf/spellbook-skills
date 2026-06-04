@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""SessionStart hook — 注入 .project_context 项目记忆库规则。
+
+跨平台输出（同一脚本适配多家 CLI）：
+  - Cursor:              additional_context（snake_case）
+  - Copilot CLI:         additionalContext（顶层）
+  - Claude Code / Codex: hookSpecificOutput.additionalContext（嵌套，两家格式相同）
+
+JSON 由 json.dumps 生成，转义完备（含所有 U+0000–U+001F 控制字符）。
+依赖：python3（Codex 官方 hook 示例同样使用 python3）。
+"""
+import json
+import os
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+rules_path = os.path.join(script_dir, "project-context.md")
+
+try:
+    with open(rules_path, encoding="utf-8") as handle:
+        rules = handle.read()
+except OSError as exc:
+    rules = f"Error: cannot read project-context.md ({exc})"
+
+context = f"<project-context-rules>\n{rules}\n</project-context-rules>"
+
+if os.environ.get("CURSOR_PLUGIN_ROOT"):
+    payload = {"additional_context": context}
+elif os.environ.get("COPILOT_CLI"):
+    payload = {"additionalContext": context}
+else:
+    payload = {
+        "hookSpecificOutput": {
+            "hookEventName": "SessionStart",
+            "additionalContext": context,
+        }
+    }
+
+print(json.dumps(payload, ensure_ascii=False))

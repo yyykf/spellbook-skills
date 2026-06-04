@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'd=\"$1\"; test -n \"$d\" && exec python3 \"$d/hooks/session-start\"' _ \"${CLAUDE_PLUGIN_ROOT}\"",
+            "async": false
+          }
+        ]
+      }
+    ]
+  }
+}
