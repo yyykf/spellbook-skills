@@ -1,7 +1,7 @@
 # Spellbook Skills
 
 <p align="center">
-  <img src="./assets/banner.png" alt="Spellbook Skills - reusable agent skills for daily engineering workflows" width="100%">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, and reviewer agents for daily engineering workflows" width="100%">
 </p>
 
 <p align="center">
@@ -18,10 +18,10 @@
 
 ## 概览
 
-Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。
+Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
 
 <p align="center">
-  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across MR comments, git flow, YApi, DDD, AGENTS.md, and simplify workflows" width="100%">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
 </p>
 
 ## 依赖
@@ -134,6 +134,15 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 | `ddd-best-practices` | DDD 架构最佳实践（Java/Spring Boot）— 分层决策、领域建模、代码模板、测试策略、审查清单与 MVC 渐进迁移 |
 | `git-merge-request` | 一键提交 + 推送 + 创建合并请求，自动识别 GitHub / GitLab 远端，优先使用仓库内 PR/MR 模板 |
 | `agents-md-improver` | 维护简洁的 AGENTS.md 项目指令：审计现有指令、沉淀会话经验，并将有价值的 CLAUDE.md 规则迁移为共享 Agent 指令 |
+
+## Project Context Hook（项目记忆库）
+
+会话开始时注入框架无关的 `.project_context/`「项目记忆库」约定的 SessionStart hook。
+
+- **Claude Code**：启用插件即自动生效。
+- **Codex / Copilot**：跑一次 `python3 hooks/install.py install`（它们不自动加载插件 hook）。
+
+完整指引（安装 / 卸载、三平台差异、设计说明）见 [docs/project-context-hook.zh-CN.md](./docs/project-context-hook.zh-CN.md)。
 
 ## 路线图
 
