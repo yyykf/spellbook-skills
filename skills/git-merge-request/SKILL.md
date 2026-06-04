@@ -76,13 +76,14 @@ git log --oneline -5
 
 **优先调用 `git-commit` 技能完成提交**，避免在本技能里重复实现 commit 流程。git-commit 已经处理：
 - 排除 `.env` 等敏感文件
-- 生成 emoji Conventional Commit
-- 中文描述、`[#AI]` 标记
+- 读取仓库提交规范并优先遵守
+- 生成 Conventional Commit（emoji 默认关闭，仅 `--emoji` 时启用且置于冒号后）
+- 按仓库规范处理描述语言与 body 标记（如 `[#AI]`）
 - 仓库提交风格识别
 
 如果 git-commit 技能不可用，按以下规则手工提交：
 - 若无已暂存文件，`git add` 已修改 / 新增文件（排除 `.env` / `*.key` / `credentials*` 等敏感文件）
-- 用 `git diff --cached` 分析变更，生成 emoji Conventional Commit（中文描述）
+- 用 `git diff --cached` 分析变更，生成 Conventional Commit（emoji 仅在仓库 / 用户要求时启用、且置于冒号后，描述用中文）
 - body 末尾追加 `[#AI]` 标记
 - 执行 `git commit`
 

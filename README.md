@@ -9,7 +9,7 @@
   <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-c65c54">
   <img alt="Codex plugin" src="https://img.shields.io/badge/Codex-plugin-16a394">
   <img alt="GitHub Copilot CLI plugin" src="https://img.shields.io/badge/GitHub%20Copilot%20CLI-plugin-5578ff">
-  <img alt="Skills 8" src="https://img.shields.io/badge/skills-8-111820">
+  <img alt="Skills 9" src="https://img.shields.io/badge/skills-9-111820">
 </p>
 
 Personal skills library for daily workflows, packaged as Claude Code, GitHub Copilot CLI, and Codex plugins.
@@ -132,6 +132,7 @@ After installation, skills are namespaced by the plugin name:
 | `yapi-skill` | Read and write YApi without running an MCP server: search interfaces, fetch interface details, and sync (upsert) one interface's docs from an OpenAPI contract via Python scripts (dry-run by default) |
 | `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found. Codex uses the optional namespaced reviewer agents installed above. |
 | `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
+| `git-commit` | Prepare Git commits from the real diff: read repo rules first, choose atomic splits, run lightweight checks, and generate Conventional Commit messages. Emoji is opt-in via `--emoji` after `type(scope):` |
 | `git-merge-request` | One-shot commit + push + create merge request, supporting both GitHub Pull Requests and GitLab Merge Requests with auto-detected platform and repo-template-aware descriptions |
 | `agents-md-improver` | Maintain concise AGENTS.md-based project instructions: audit current guidance, capture session learnings, and migrate useful CLAUDE.md rules into shared agent instructions |
 
