@@ -326,6 +326,107 @@ def http_get_json(url: str, timeout_seconds: int, verify_tls: bool) -> Dict[str,
     return data
 
 
+def _http_write_raw(
+    url: str,
+    data: bytes,
+    content_type: str,
+    timeout_seconds: int,
+    verify_tls: bool,
+) -> Dict[str, Any]:
+    """POST a pre-encoded body to a YApi write endpoint, parse the JSON reply.
+
+    Shared by http_post_form / http_post_json. Unlike http_get_json, write
+    requests are NOT retried: `add` is not idempotent, so a blind retry could
+    create duplicate interfaces.
+    """
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "Accept": "application/json",
+            "Content-Type": content_type,
+            "User-Agent": "yapi-skill/1.0",
+        },
+        method="POST",
+    )
+
+    context = None
+    if not verify_tls and url.lower().startswith("https://"):
+        context = ssl._create_unverified_context()
+
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_seconds, context=context) as resp:
+            raw = resp.read()
+    except urllib.error.HTTPError as e:
+        redacted = _redact_url(url)
+        try:
+            detail = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            detail = "<no-body>"
+        raise YapiSkillError(f"HTTP write failed: {e.code} {e.reason}, URL={redacted}, response={detail}") from e
+    except (urllib.error.URLError, http.client.RemoteDisconnected, ConnectionResetError, TimeoutError) as e:
+        redacted = _redact_url(url)
+        raise YapiSkillError(f"Network write failed: URL={redacted}, reason: {e}") from e
+
+    text = raw.decode("utf-8", errors="replace")
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as e:
+        redacted = _redact_url(url)
+        raise YapiSkillError(f"Write response is not valid JSON: URL={redacted}, reason: {e}, snippet={text[:200]}") from e
+    if not isinstance(parsed, dict):
+        raise YapiSkillError("Write response JSON structure anomaly: expected Object")
+    return parsed
+
+
+def http_post_form(
+    url: str,
+    fields: Dict[str, Any],
+    timeout_seconds: int,
+    verify_tls: bool,
+) -> Dict[str, Any]:
+    """POST application/x-www-form-urlencoded to a YApi write endpoint.
+
+    For endpoints whose body is flat scalars only — e.g. /api/interface/add_cat,
+    which the OpenAPI doc specifies as form-urlencoded. Do NOT use this for
+    add/up: their array fields (req_query/req_headers/req_params/req_body_form/
+    tag) cannot survive form encoding — they get JSON-stringified to e.g. "[]"
+    and YApi rejects them ("应当是 array 类型"). Use http_post_json instead.
+    """
+    body_pairs: List[Tuple[str, str]] = []
+    for k, v in fields.items():
+        if v is None:
+            continue
+        if isinstance(v, bool):
+            body_pairs.append((k, "true" if v else "false"))
+        elif isinstance(v, (dict, list)):
+            body_pairs.append((k, json.dumps(v, ensure_ascii=False)))
+        else:
+            body_pairs.append((k, str(v)))
+    data = urllib.parse.urlencode(body_pairs).encode("utf-8")
+    return _http_write_raw(url, data, "application/x-www-form-urlencoded; charset=utf-8", timeout_seconds, verify_tls)
+
+
+def http_post_json(
+    url: str,
+    payload: Dict[str, Any],
+    timeout_seconds: int,
+    verify_tls: bool,
+) -> Dict[str, Any]:
+    """POST application/json to a YApi write endpoint.
+
+    Required for /api/interface/add and /api/interface/up: their bodies carry
+    array fields (req_query/req_headers/req_params/req_body_form/tag) that YApi
+    validates as real JSON arrays. form-urlencoded would serialize them to
+    strings like "[]" and YApi rejects that. JSON body keeps arrays/bools/
+    nested objects as-is. `None` values are dropped so callers can omit a field
+    by leaving it None (mirrors http_post_form).
+    """
+    body = {k: v for k, v in payload.items() if v is not None}
+    data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    return _http_write_raw(url, data, "application/json; charset=utf-8", timeout_seconds, verify_tls)
+
+
 def yapi_extract_data(resp: Dict[str, Any]) -> Any:
     if "errcode" not in resp:
         raise YapiSkillError("Yapi response missing errcode field")
@@ -414,6 +515,139 @@ def yapi_list_interfaces_raw(
     if not isinstance(data, dict):
         raise YapiSkillError("Interface list data structure anomaly: expected Object")
     return data
+
+
+def yapi_add_interface_raw(config: YapiConfig, project_id: int, fields: Dict[str, Any]) -> Any:
+    """POST /api/interface/add. Caller supplies YApi-native fields (title/path/method/catid/req_*/res_body/markdown...)."""
+    token = get_token(config, project_id)
+    payload = {**fields, "token": token, "project_id": project_id}
+    url = f"{config.base_url}/api/interface/add"
+    resp = http_post_json(url, payload, config.timeout_seconds, config.verify_tls)
+    return yapi_extract_data(resp)
+
+
+def yapi_up_interface_raw(config: YapiConfig, project_id: int, fields: Dict[str, Any]) -> Any:
+    """POST /api/interface/up. `fields` must include the interface `id`.
+
+    `status` is stripped here on purpose: YApi errors out ("服务器出错") when a
+    project-token `up` carries `status`, and status is human-owned content the
+    sync must not touch.
+    """
+    token = get_token(config, project_id)
+    payload = {k: v for k, v in fields.items() if k != "status"}
+    payload["token"] = token
+    url = f"{config.base_url}/api/interface/up"
+    resp = http_post_json(url, payload, config.timeout_seconds, config.verify_tls)
+    return yapi_extract_data(resp)
+
+
+def yapi_get_cat_menu_raw(config: YapiConfig, project_id: int) -> List[Dict[str, Any]]:
+    """GET /api/interface/getCatMenu — list a project's categories (menus)."""
+    token = get_token(config, project_id)
+    url = _build_url(config.base_url, "/api/interface/getCatMenu", {"project_id": project_id, "token": token})
+    resp = http_get_json(url, config.timeout_seconds, config.verify_tls)
+    data = yapi_extract_data(resp)
+    if not isinstance(data, list):
+        raise YapiSkillError("Cat menu data structure anomaly: expected Array")
+    return data
+
+
+def yapi_add_cat_raw(config: YapiConfig, project_id: int, name: str, desc: str = "") -> Any:
+    """POST /api/interface/add_cat — create a category; returns the created cat (with _id)."""
+    token = get_token(config, project_id)
+    payload = {"token": token, "project_id": project_id, "name": name, "desc": desc}
+    url = f"{config.base_url}/api/interface/add_cat"
+    resp = http_post_form(url, payload, config.timeout_seconds, config.verify_tls)
+    return yapi_extract_data(resp)
+
+
+def normalize_api_path(path: str) -> str:
+    """Normalize a path for matching: trim + strip trailing slash (except root).
+
+    Case-SENSITIVE on purpose: HTTP paths are case-sensitive, and folding case
+    could match a different interface (e.g. /User vs /user) and overwrite it.
+    """
+    s = (path or "").strip()
+    if len(s) > 1 and s.endswith("/"):
+        s = s.rstrip("/")
+    return s
+
+
+def find_interface_by_path_method(
+    config: YapiConfig,
+    project_id: int,
+    path: str,
+    method: str,
+) -> Optional[Dict[str, Any]]:
+    """Locate an interface within a project by exact (path, method).
+
+    Returns the list item (containing `_id`) if exactly one matches, None if none.
+    Raises if multiple match (ambiguous — caller should resolve via explicit id).
+    """
+    target_path = normalize_api_path(path)
+    target_method = (method or "").strip().upper()
+    matches: List[Dict[str, Any]] = []
+
+    page_size = max(1, int(config.search_page_size))
+    max_pages = max(1, int(config.search_max_pages))
+    fully_scanned = False
+    scanned_count = 0
+    last_total = 0
+    for page in range(1, max_pages + 1):
+        data = yapi_list_interfaces_raw(config, project_id, page, page_size)
+        items = data.get("list") if isinstance(data, dict) else None
+        if not isinstance(items, list):
+            raise YapiSkillError(
+                f"Interface list response malformed for project {project_id} (page {page}): "
+                "'list' is missing or not an array."
+            )
+        if not items:  # 空数组 = 末页
+            fully_scanned = True
+            break
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            if (
+                normalize_api_path(str(it.get("path"))) == target_path
+                and str(it.get("method") or "").strip().upper() == target_method
+            ):
+                matches.append(it)
+        scanned_count += len(items)
+        total = data.get("total") if isinstance(data, dict) else None
+        try:
+            last_total = int(total) if total is not None else 0
+        except Exception:
+            last_total = 0
+        if last_total > 0 and scanned_count >= last_total:
+            fully_scanned = True
+            break
+        if len(items) < page_size:
+            # 不足一页：通常即末页（即便 total 缺失/为 0 也可据此判定完整扫描）
+            fully_scanned = True
+            break
+
+    if len(matches) > 1:
+        ids = [m.get("_id") for m in matches]
+        raise YapiSkillError(
+            f"Found {len(matches)} interfaces matching {target_method} {path} (ids={ids}); "
+            "resolve manually with an explicit interfaceId."
+        )
+    # 未完整扫描时无法下确定结论：有候选不能证明唯一、无候选不能断定不存在 → 一律 fail closed
+    if not fully_scanned:
+        if matches:
+            raise YapiSkillError(
+                f"Found a candidate for {target_method} {path} (id={matches[0].get('_id')}) but the "
+                f"interface list was not fully scanned (scanned {scanned_count} of total {last_total}, "
+                f"max_pages={max_pages}); cannot prove it is the only match. "
+                "Pass an explicit --interfaceId, or increase search.max_pages in config."
+            )
+        raise YapiSkillError(
+            f"Interface list not fully scanned for project {project_id} "
+            f"(scanned {scanned_count} of total {last_total}, max_pages={max_pages}); "
+            f"refusing to conclude '{target_method} {path}' is absent. "
+            "Increase search.max_pages in config, or pass an explicit --interfaceId."
+        )
+    return matches[0] if matches else None
 
 
 def build_interface_detail_vo(detail: Dict[str, Any]) -> Dict[str, Any]:

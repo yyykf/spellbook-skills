@@ -129,7 +129,7 @@ After installation, skills are namespaced by the plugin name:
 | `using-git-worktrees-lite` | Create a worktree from the current branch with build/compile verification only (no tests) |
 | `finishing-a-development-branch-lite` | Use build/compile verification as the completion gate, then merge/PR/keep/discard and clean up the worktree |
 | `reviewing-gitlab-mr-comments` | Review GitLab MR comments via glab, summarize feedback, and propose a checklist or plan before execution |
-| `yapi-skill` | Query YApi without running an MCP server: search interfaces and fetch interface details via Python scripts |
+| `yapi-skill` | Read and write YApi without running an MCP server: search interfaces, fetch interface details, and sync (upsert) one interface's docs from an OpenAPI contract via Python scripts (dry-run by default) |
 | `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found. Codex uses the optional namespaced reviewer agents installed above. |
 | `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
 | `git-merge-request` | One-shot commit + push + create merge request, supporting both GitHub Pull Requests and GitLab Merge Requests with auto-detected platform and repo-template-aware descriptions |
