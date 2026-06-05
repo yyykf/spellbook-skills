@@ -139,10 +139,16 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 
 ## Project Context Hook（项目记忆库）
 
-会话开始时注入框架无关的 `.project_context/`「项目记忆库」约定的 SessionStart hook。
+**可选**的 SessionStart hook，在会话开始时注入框架无关的 `.project_context/`「项目记忆库」约定。它是增强能力，并非使用插件 skills 的必需步骤。
 
-- **Claude Code**：启用插件即自动生效。
-- **Codex / Copilot**：跑一次 `python3 hooks/install.py install`（它们不自动加载插件 hook）。
+- **Claude Code**：启用插件即自动生效，无需安装。
+- **Codex / Copilot**：它们不自动加载插件 hook，需手动安装一次。无需 clone 仓库：
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash
+  ```
+
+  Windows 改用 `install-project-context-hook.ps1` 安装脚本（见下方完整指引）。若已 clone 仓库，也可跑 `python3 hooks/install.py install`。Codex 上安装后需启动 Codex 跑一次 `/hooks` 信任该 hook。
 
 完整指引（安装 / 卸载、三平台差异、设计说明）见 [docs/project-context-hook.zh-CN.md](./docs/project-context-hook.zh-CN.md)。
 

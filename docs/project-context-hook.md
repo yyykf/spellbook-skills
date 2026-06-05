@@ -12,15 +12,37 @@ The injected rules live in [`hooks/project-context.md`](../hooks/project-context
 
 Enable the plugin and you're done. Claude Code auto-discovers `hooks/hooks.json` and fires on `startup` / `clear` / `compact`. No configuration needed.
 
-### Codex / Copilot ⚙️ run install.py once
+### Codex / Copilot ⚙️ install once (optional)
 
-Codex does not load plugin-bundled hooks (runtime limitation, see below), and Copilot's hook has a compaction gap — so these two platforms are configured by the installer:
+Codex does not load plugin-bundled hooks (runtime limitation, see below), and Copilot's hook has a compaction gap — so these two platforms are configured by the installer. This is an optional enhancement; skip it if you only want the plugin skills.
+
+**No clone required (macOS / Linux)** — the remote installer downloads `install.py` plus its payload into a temp dir and runs it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                 # install
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- uninstall
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- status
+```
+
+**No clone required (Windows PowerShell)** — the `.ps1` installer does the same:
+
+```powershell
+$script = Join-Path $env:TEMP "install-project-context-hook.ps1"
+Invoke-WebRequest https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.ps1 -OutFile $script
+powershell -NoProfile -ExecutionPolicy Bypass -File $script install    # or: uninstall / status
+```
+
+> Windows needs `python3` / `python` / `py` on PATH. The hook command install.py writes for Codex calls `python3`, so make sure `python3` resolves at runtime (Microsoft Store Python ships a `python3` alias), or run Codex / Copilot under WSL and use the bash installer above.
+
+**From a local checkout**, run `install.py` directly (this assumes you are inside the repo checkout, where `hooks/` exists):
 
 ```bash
 python3 hooks/install.py install     # install (Codex + Copilot)
 python3 hooks/install.py uninstall   # uninstall (removes only what it added)
 python3 hooks/install.py status      # show install status
 ```
+
+On Windows from a checkout, `scripts/install-project-context-hook.cmd` / `.bat` are thin PowerShell wrappers around `install.py`.
 
 What `install` does:
 
@@ -30,7 +52,7 @@ What `install` does:
 
 `uninstall` removes only its own entries (by script path / marker block) without touching others; repeated `install` is idempotent.
 
-> **Re-sync after editing rules**: `project-context.md` is the single source of truth. Claude Code reads it live each session (edits take effect next session); but **Codex / Copilot hold a copy made at `install` time**, so after editing `project-context.md` you must **re-run `python3 hooks/install.py install`** to sync Codex / Copilot.
+> **Re-sync after editing rules**: `project-context.md` is the single source of truth. Claude Code reads it live each session (edits take effect next session); but **Codex / Copilot hold a copy made at `install` time**, so after editing `project-context.md` you must **re-run the installer** (the remote installer, or `python3 hooks/install.py install` from a checkout) to sync Codex / Copilot.
 
 > **⚠️ Codex requires first-time trust**: after `install`, start Codex and run `/hooks` once to review and trust this hook. This is Codex's security gate and cannot be pre-trusted by a script.
 
