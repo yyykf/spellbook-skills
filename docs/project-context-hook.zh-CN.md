@@ -12,15 +12,37 @@
 
 启用本插件即可。Claude Code 自动发现 `hooks/hooks.json`，在会话 `startup` / `clear` / `compact` 时触发，无需任何配置。
 
-### Codex / Copilot ⚙️ 跑一次 install.py
+### Codex / Copilot ⚙️ 安装一次（可选）
 
-Codex 不加载插件内 hook（运行时限制，见下），Copilot 的 hook 又有 compact 缺陷——这两个平台用安装脚本自动配置：
+Codex 不加载插件内 hook（运行时限制，见下），Copilot 的 hook 又有 compact 缺陷——这两个平台用安装脚本自动配置。这是可选增强；只想用插件 skills 可跳过。
+
+**无需 clone 仓库（macOS / Linux）** —— 远程安装脚本会把 `install.py` 及其 payload 下载到临时目录后执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                 # 安装
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- uninstall
+curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- status
+```
+
+**无需 clone 仓库（Windows PowerShell）** —— `.ps1` 安装脚本做同样的事：
+
+```powershell
+$script = Join-Path $env:TEMP "install-project-context-hook.ps1"
+Invoke-WebRequest https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.ps1 -OutFile $script
+powershell -NoProfile -ExecutionPolicy Bypass -File $script install    # 或：uninstall / status
+```
+
+> Windows 需 PATH 上有 `python3` / `python` / `py`。install.py 为 Codex 写入的 hook 命令调用 `python3`，所以要确保运行时 `python3` 能解析（Microsoft Store 版 Python 自带 `python3` 别名），或在 WSL 里用上面的 bash 安装脚本。
+
+**已 clone 仓库**时，可直接跑 `install.py`（该命令假设你在仓库 checkout 内，`hooks/` 存在）：
 
 ```bash
 python3 hooks/install.py install     # 安装（Codex + Copilot）
 python3 hooks/install.py uninstall   # 卸载（精确移除自己加的，不动他人配置）
 python3 hooks/install.py status      # 查看安装状态
 ```
+
+Windows 本地 checkout 下，`scripts/install-project-context-hook.cmd` / `.bat` 是对 `install.py` 的薄 PowerShell wrapper。
 
 `install` 做的事：
 
@@ -30,7 +52,7 @@ python3 hooks/install.py status      # 查看安装状态
 
 `uninstall` 靠脚本路径 / marker 块精确移除自己加的部分，不碰他人配置；重复 `install` 幂等。
 
-> **改了规则要重新同步**：`project-context.md` 是单一真相源。Claude Code 每次会话实时读取，改了下次会话即生效；但 **Codex / Copilot 拿到的是 `install` 时的副本**，所以修改 `project-context.md` 后需**重跑 `python3 hooks/install.py install`** 才能同步到 Codex / Copilot。
+> **改了规则要重新同步**：`project-context.md` 是单一真相源。Claude Code 每次会话实时读取，改了下次会话即生效；但 **Codex / Copilot 拿到的是 `install` 时的副本**，所以修改 `project-context.md` 后需**重跑安装脚本**（远程安装脚本，或在 checkout 内跑 `python3 hooks/install.py install`）才能同步到 Codex / Copilot。
 
 > **⚠️ Codex 首次需信任**：`install` 后启动 Codex 跑一次 `/hooks` 审核并信任本 hook（一次即可）。这是 Codex 的安全门控，无法脚本预信任。
 
