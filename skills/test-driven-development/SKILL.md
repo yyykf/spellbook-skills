@@ -62,6 +62,8 @@ Before writing any test, list the behaviors you need to cover — the basic case
 pick one item  →  RED  →  verify red  →  GREEN  →  verify green  →  REFACTOR  →  back to the list
 ```
 
+> **Run tests in the quietest mode that still surfaces failures.** Verbose pass logs burn context you don't need — quiet runners stay silent on green and print full detail on red, so you keep the failures without the noise. Switch to verbose (`-v` / `-s` / `--nocapture`) only when isolating one test's output. Per-language quiet flags are in each [`references/languages/<lang>.md`](references/languages/).
+
 #### RED — write one failing test
 
 One behavior, a name that describes that behavior (e.g. `shouldRetryThreeTimesThenSucceed`, not `test1`), real code over mocks. Work backwards from the assertion. See your language file for concrete framework syntax.

@@ -14,6 +14,8 @@ go test -race ./...                 # with the race detector (see Tooling)
 go test -v ./pay                    # verbose: show each test/subtest result
 ```
 
+Plain `go test` is already quiet on green (`ok pkg`) and detailed on red — no quiet flag needed; reach for `-v` only to inspect a specific test, not in the normal loop.
+
 Minimal real failing test (RED) — `pay/amount_test.go`:
 
 ```go

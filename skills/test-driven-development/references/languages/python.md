@@ -14,6 +14,8 @@ pytest -k "total and not slow"         # select by name expression
 pytest --lf                            # rerun only last-failed (tight red→green loop)
 ```
 
+In the red→green loop, `pytest -q` is the quiet default (silent on green, full diff on red). The `-x` above stops at the first failure; the `-v`/`-s` are for **debugging one test's output** — drop them in the normal loop.
+
 Configure in `pyproject.toml` (pytest 9.0 added a native `[tool.pytest]` table; the long-standing `[tool.pytest.ini_options]` still works):
 
 ```toml

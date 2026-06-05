@@ -17,6 +17,8 @@ mvn -q test                 # Maven (Surefire ≥ 3.x runs JUnit Platform native
 ./gradlew test              # Gradle (needs `test { useJUnitPlatform() }`)
 ```
 
+For an agent loop, prefer the quiet flag: `mvn -q test` (shown above) and `./gradlew test -q` both stay silent on green and print the full failure on red — add `-q` to the single-test commands too.
+
 Run a single test (method-level):
 
 ```bash

@@ -15,6 +15,8 @@ npx vitest run -t "rejects negative" # one test by name (regex on full describe+
 npx vitest                          # watch mode (local TDD loop)
 ```
 
+For an agent loop, add `--reporter=dot` (one char per test) or `--silent` (drops `console.log` noise) — full detail still prints on failure; keep verbose reporters for humans debugging.
+
 Minimal failing test (RED) — note it imports a function that does not exist yet, so it fails to compile, which *is* the red:
 
 ```typescript

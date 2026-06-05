@@ -15,6 +15,8 @@ cargo test --doc           # only doc tests
 cargo test -- --nocapture  # show println! / dbg! output even on passing tests
 ```
 
+For the loop, `cargo test` already captures output and is quiet on green; add `-q` for one char per test. `cargo test -- --nocapture` (above) floods stdout — use it only when debugging a single test.
+
 Minimal failing-test skeleton (write this first, watch it fail to compile/run):
 
 ```rust
