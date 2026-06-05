@@ -1,7 +1,7 @@
 # Spellbook Skills
 
 <p align="center">
-  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, and reviewer agents for daily engineering workflows" width="100%">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, TDD workflows, and reviewer agents for daily engineering workflows" width="100%">
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
   <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-c65c54">
   <img alt="Codex plugin" src="https://img.shields.io/badge/Codex-plugin-16a394">
   <img alt="GitHub Copilot CLI plugin" src="https://img.shields.io/badge/GitHub%20Copilot%20CLI-plugin-5578ff">
-  <img alt="Skills 9" src="https://img.shields.io/badge/skills-9-111820">
+  <img alt="Skills 10" src="https://img.shields.io/badge/skills-10-111820">
 </p>
 
 Personal skills library for daily workflows, packaged as Claude Code, GitHub Copilot CLI, and Codex plugins.
@@ -18,10 +18,10 @@ Personal skills library for daily workflows, packaged as Claude Code, GitHub Cop
 
 ## Overview
 
-Spellbook Skills is a collection of agent skills for daily development workflows — covering git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session start (see the [Project Context Hook](#project-context-hook) section below).
+Spellbook Skills is a collection of agent skills for daily development workflows — covering test-driven development, git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session start (see the [Project Context Hook](#project-context-hook) section below).
 
 <p align="center">
-  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
 </p>
 
 ## Requirements
@@ -132,6 +132,7 @@ After installation, skills are namespaced by the plugin name:
 | `yapi-skill` | Read and write YApi without running an MCP server: search interfaces, fetch interface details, and sync (upsert) one interface's docs from an OpenAPI contract via Python scripts (dry-run by default) |
 | `simplify` | Review changed code for reuse, quality, and efficiency with three parallel review passes, then fix issues found. Codex uses the optional namespaced reviewer agents installed above. |
 | `ddd-best-practices` | DDD architecture best practices for Java/Spring Boot — layering decisions, domain modeling, code templates, test strategy, review checklists, and MVC-to-DDD migration |
+| `test-driven-development` | Red-green-refactor TDD discipline with Kent Beck's Tidy First (structural vs behavioral changes) and a Canon test list; language-agnostic core, with per-language notes for Java/TS/Python/Go/Rust |
 | `git-commit` | Prepare Git commits from the real diff: read repo rules first, choose atomic splits, run lightweight checks, and generate Conventional Commit messages. Emoji is opt-in via `--emoji` after `type(scope):` |
 | `git-merge-request` | One-shot commit + push + create merge request, supporting both GitHub Pull Requests and GitLab Merge Requests with auto-detected platform and repo-template-aware descriptions |
 | `agents-md-improver` | Maintain concise AGENTS.md-based project instructions: audit current guidance, capture session learnings, and migrate useful CLAUDE.md rules into shared agent instructions |
@@ -162,3 +163,4 @@ Issues and PRs are welcome. Keep changes small and focused.
 - This repository is adapted from [superpowers](https://github.com/obra/superpowers). Thanks to the original project for the skill framework and workflow design.
 - The `ddd-best-practices` skill draws on ideas and practices from [xfg-ddd-skills](https://github.com/fuzhengwei/xfg-ddd-skills). Thanks for the inspiration.
 - The `agents-md-improver` skill is inspired by Anthropic's [claude-md-management](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management), adapted for AGENTS.md-compatible coding agents.
+- The `test-driven-development` skill combines [superpowers](https://github.com/obra/superpowers)' TDD skill with Kent Beck's *Tidy First* and *Canon TDD* (from his *Augmented Coding: Beyond the Vibes* and *Canon TDD* posts). Thanks to both.

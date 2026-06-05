@@ -1,7 +1,7 @@
 # Spellbook Skills
 
 <p align="center">
-  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, and reviewer agents for daily engineering workflows" width="100%">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, TDD workflows, and reviewer agents for daily engineering workflows" width="100%">
 </p>
 
 <p align="center">
@@ -9,7 +9,7 @@
   <img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-c65c54">
   <img alt="Codex plugin" src="https://img.shields.io/badge/Codex-plugin-16a394">
   <img alt="GitHub Copilot CLI plugin" src="https://img.shields.io/badge/GitHub%20Copilot%20CLI-plugin-5578ff">
-  <img alt="Skills 9" src="https://img.shields.io/badge/skills-9-111820">
+  <img alt="Skills 10" src="https://img.shields.io/badge/skills-10-111820">
 </p>
 
 面向日常工作流的个人技能仓库，提供 Claude Code、GitHub Copilot CLI 与 Codex 插件配置。
@@ -18,10 +18,10 @@
 
 ## 概览
 
-Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
+Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖测试驱动开发、git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
 
 <p align="center">
-  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
 </p>
 
 ## 依赖
@@ -132,6 +132,7 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 | `yapi-skill` | 免服务读写 YApi：搜索接口、获取接口详情，并从 OpenAPI 契约同步（upsert）单个接口文档（Python 标准库脚本直连，默认 dry-run） |
 | `simplify` | 三维并行审查变更代码（复用性、质量、效率），自动修复发现的问题；Codex 可使用上面额外安装的带命名空间 reviewer agents |
 | `ddd-best-practices` | DDD 架构最佳实践（Java/Spring Boot）— 分层决策、领域建模、代码模板、测试策略、审查清单与 MVC 渐进迁移 |
+| `test-driven-development` | 测试驱动开发：红-绿-重构纪律 + Kent Beck 的 Tidy First（结构/行为改动分离）与 Canon 测试清单；语言无关主体，附 Java/TS/Python/Go/Rust 各语言专属注意事项 |
 | `git-commit` | 基于真实 diff 准备 Git 提交：先读仓库规范，判断是否需要原子拆分，运行轻量校验，并生成 Conventional Commit；emoji 仅在 `--emoji` 时放到 `type(scope):` 之后 |
 | `git-merge-request` | 一键提交 + 推送 + 创建合并请求，自动识别 GitHub / GitLab 远端，优先使用仓库内 PR/MR 模板 |
 | `agents-md-improver` | 维护简洁的 AGENTS.md 项目指令：审计现有指令、沉淀会话经验，并将有价值的 CLAUDE.md 规则迁移为共享 Agent 指令 |
@@ -162,3 +163,4 @@ MIT，详见 [LICENSE](./LICENSE)。
 - 本仓库参考并改写了 [superpowers](https://github.com/obra/superpowers) 的技能与流程设计，在此致谢。
 - `ddd-best-practices` 技能的设计灵感与实践经验来自 [xfg-ddd-skills](https://github.com/fuzhengwei/xfg-ddd-skills)，特此致谢。
 - `agents-md-improver` 技能参考了 Anthropic 的 [claude-md-management](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management)，并适配为面向 AGENTS.md 兼容编码 Agent 的通用指令维护流程。
+- `test-driven-development` 技能在 [superpowers](https://github.com/obra/superpowers) 的 TDD 技能基础上，融入 Kent Beck 的 Tidy First 与 Canon TDD（出自其 *Augmented Coding: Beyond the Vibes* 与 *Canon TDD* 文章），在此一并致谢。
