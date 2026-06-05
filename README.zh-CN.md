@@ -1,7 +1,7 @@
 # Spellbook Skills
 
 <p align="center">
-  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, and reviewer agents for daily engineering workflows" width="100%">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, TDD workflows, and reviewer agents for daily engineering workflows" width="100%">
 </p>
 
 <p align="center">
@@ -18,10 +18,10 @@
 
 ## 概览
 
-Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖 git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
+Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖测试驱动开发、git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
 
 <p align="center">
-  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
 </p>
 
 ## 依赖

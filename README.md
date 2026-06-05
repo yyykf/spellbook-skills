@@ -1,7 +1,7 @@
 # Spellbook Skills
 
 <p align="center">
-  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, and reviewer agents for daily engineering workflows" width="100%">
+  <img src="./assets/banner.png" alt="Spellbook Skills - reusable skills, hooks, TDD workflows, and reviewer agents for daily engineering workflows" width="100%">
 </p>
 
 <p align="center">
@@ -18,10 +18,10 @@ Personal skills library for daily workflows, packaged as Claude Code, GitHub Cop
 
 ## Overview
 
-Spellbook Skills is a collection of agent skills for daily development workflows — covering git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session start (see the [Project Context Hook](#project-context-hook) section below).
+Spellbook Skills is a collection of agent skills for daily development workflows — covering test-driven development, git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session start (see the [Project Context Hook](#project-context-hook) section below).
 
 <p align="center">
-  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
+  <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
 </p>
 
 ## Requirements
