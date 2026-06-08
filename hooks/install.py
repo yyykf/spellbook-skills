@@ -24,9 +24,20 @@ Claude Code 靠插件自动加载本目录的 hooks.json，无需本脚本。
 """
 import json
 import os
+import shlex
 import shutil
+import subprocess
 import sys
 import tempfile
+
+# Windows 控制台默认 GBK/cp936，无法编码状态提示里的对勾/警告 emoji，
+# 会让 install/uninstall 因 UnicodeEncodeError 崩溃。这里强制标准流走 UTF-8
+#（Python 3.7+），保证输出永不中断。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOME = os.path.expanduser("~")
@@ -146,10 +157,27 @@ def remove_payload():
 
 
 # ---------- Codex ----------
+def _quote_command_arg(arg):
+    if os.name == "nt":
+        quoted = subprocess.list2cmdline([arg])
+        return quoted if quoted.startswith('"') else f'"{quoted}"'
+    return shlex.quote(arg)
+
+
+def _command(args):
+    return " ".join(_quote_command_arg(arg) for arg in args)
+
+
 def _codex_entry():
     return {
         "matcher": "startup|resume|clear|compact",
-        "hooks": [{"type": "command", "timeout": 5, "command": f'python3 "{installed_script()}"'}],
+        "hooks": [
+            {
+                "type": "command",
+                "timeout": 5,
+                "command": _command([sys.executable, installed_script()]),
+            }
+        ],
     }
 
 

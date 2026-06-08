@@ -1,0 +1,118 @@
+name: Windows Project Context Hook Smoke
+
+on:
+  push:
+    paths:
+      - ".github/workflows/windows-project-context-hook-smoke.yml"
+      - "hooks/**"
+      - "scripts/install-project-context-hook.bat"
+      - "scripts/install-project-context-hook.cmd"
+      - "scripts/install-project-context-hook.ps1"
+      - "tests/test_install.py"
+  pull_request:
+    paths:
+      - ".github/workflows/windows-project-context-hook-smoke.yml"
+      - "hooks/**"
+      - "scripts/install-project-context-hook.bat"
+      - "scripts/install-project-context-hook.cmd"
+      - "scripts/install-project-context-hook.ps1"
+      - "tests/test_install.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Windows installer smoke
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run installer regression tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          python --version
+          python tests/test_install.py
+          python -m py_compile hooks/install.py tests/test_install.py
+
+      - name: Smoke PowerShell installer and generated hook command
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $root = Join-Path $env:RUNNER_TEMP ("spellbook-pc-hook-" + [Guid]::NewGuid().ToString("N"))
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+          $env:SPELLBOOK_HOME = Join-Path $root "spellbook"
+          $env:CODEX_HOME = Join-Path $root "codex"
+          $env:COPILOT_HOME = Join-Path $root "copilot"
+          New-Item -ItemType Directory -Force -Path $env:CODEX_HOME | Out-Null
+          New-Item -ItemType Directory -Force -Path $env:COPILOT_HOME | Out-Null
+
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action install
+
+          $hooksJson = Join-Path $env:CODEX_HOME "hooks.json"
+          $data = Get-Content -LiteralPath $hooksJson -Raw | ConvertFrom-Json
+          $commands = @()
+          foreach ($entry in @($data.hooks.SessionStart)) {
+            foreach ($hook in @($entry.hooks)) {
+              if ($hook.command -and ([string]$hook.command).Contains("session-start")) {
+                $commands += [string]$hook.command
+              }
+            }
+          }
+
+          if ($commands.Count -ne 1) {
+            throw "Expected exactly one spellbook session-start command, got $($commands.Count)"
+          }
+
+          $command = $commands[0]
+          Write-Host "Generated hook command: $command"
+          if ($command -match '^\s*"?python3(?:\.exe)?"?\s+') {
+            throw "Generated hook command still hard-codes bare python3"
+          }
+
+          $env:SPELLBOOK_HOOK_COMMAND = $command
+          $env:PYTHONIOENCODING = "cp936"
+          $validator = @'
+          import json
+          import os
+          import subprocess
+          import sys
+
+          command = os.environ["SPELLBOOK_HOOK_COMMAND"]
+          result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          if result.returncode != 0:
+              sys.stderr.buffer.write(result.stderr)
+              raise SystemExit(result.returncode)
+
+          try:
+              text = result.stdout.decode("utf-8")
+          except UnicodeDecodeError as exc:
+              raise SystemExit(f"hook stdout is not UTF-8: {exc}") from exc
+
+          payload = json.loads(text)
+          context = payload.get("hookSpecificOutput", {}).get("additionalContext", "")
+          if not context:
+              raise SystemExit("hook JSON is missing hookSpecificOutput.additionalContext")
+
+          print("generated hook command returned UTF-8 JSON")
+          '@
+          python -c $validator
+
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action status
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action uninstall
+
+          $payloadDir = Join-Path $env:SPELLBOOK_HOME "hooks"
+          if (Test-Path -LiteralPath $payloadDir) {
+            throw "Uninstall left payload directory behind: $payloadDir"
+          }

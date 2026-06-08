@@ -32,7 +32,7 @@ Invoke-WebRequest https://raw.githubusercontent.com/yyykf/spellbook-skills/main/
 powershell -NoProfile -ExecutionPolicy Bypass -File $script install    # or: uninstall / status
 ```
 
-> Windows needs `python3` / `python` / `py` on PATH. The hook command install.py writes for Codex calls `python3`, so make sure `python3` resolves at runtime (Microsoft Store Python ships a `python3` alias), or run Codex / Copilot under WSL and use the bash installer above.
+> Windows needs `py` / `python` / `python3` on PATH. The PowerShell installer probes candidates by actually running them, then `install.py` writes the working Python executable into Codex's hook command so runtime does not depend on a bare `python3` alias.
 
 **From a local checkout**, run `install.py` directly (this assumes you are inside the repo checkout, where `hooks/` exists):
 
@@ -56,7 +56,7 @@ What `install` does:
 
 > **⚠️ Codex requires first-time trust**: after `install`, start Codex and run `/hooks` once to review and trust this hook. This is Codex's security gate and cannot be pre-trusted by a script.
 
-> Requires python3. Env vars `SPELLBOOK_HOME` / `CODEX_HOME` / `COPILOT_HOME` override paths (mainly for testing, see `tests/test_install.py`).
+> Requires Python 3. Env vars `SPELLBOOK_HOME` / `CODEX_HOME` / `COPILOT_HOME` override paths (mainly for testing, see `tests/test_install.py`).
 
 ## Design notes (why it works this way)
 

@@ -32,7 +32,7 @@ Invoke-WebRequest https://raw.githubusercontent.com/yyykf/spellbook-skills/main/
 powershell -NoProfile -ExecutionPolicy Bypass -File $script install    # 或：uninstall / status
 ```
 
-> Windows 需 PATH 上有 `python3` / `python` / `py`。install.py 为 Codex 写入的 hook 命令调用 `python3`，所以要确保运行时 `python3` 能解析（Microsoft Store 版 Python 自带 `python3` 别名），或在 WSL 里用上面的 bash 安装脚本。
+> Windows 需 PATH 上有 `py` / `python` / `python3`。PowerShell 安装器会实际运行候选解释器做探测，然后由 `install.py` 把可工作的 Python 可执行文件写入 Codex hook command，因此运行时不再依赖裸 `python3` 别名。
 
 **已 clone 仓库**时，可直接跑 `install.py`（该命令假设你在仓库 checkout 内，`hooks/` 存在）：
 
@@ -56,7 +56,7 @@ Windows 本地 checkout 下，`scripts/install-project-context-hook.cmd` / `.bat
 
 > **⚠️ Codex 首次需信任**：`install` 后启动 Codex 跑一次 `/hooks` 审核并信任本 hook（一次即可）。这是 Codex 的安全门控，无法脚本预信任。
 
-> 依赖 python3。可用环境变量 `SPELLBOOK_HOME` / `CODEX_HOME` / `COPILOT_HOME` 覆盖路径（主要用于测试，见 `tests/test_install.py`）。
+> 依赖 Python 3。可用环境变量 `SPELLBOOK_HOME` / `CODEX_HOME` / `COPILOT_HOME` 覆盖路径（主要用于测试，见 `tests/test_install.py`）。
 
 ## 设计说明（为什么这样做）
 
