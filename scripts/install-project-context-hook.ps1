@@ -33,25 +33,39 @@ Options:
   -Help      Show this help.
 
 After installing on Codex, start Codex and run /hooks once to trust the hook.
-Requires python3 / python on PATH.
+Requires py / python / python3 on PATH.
 "@ | Write-Output
     exit 0
 }
 
 $Files = @("install.py", "session-start", "project-context.md")
 
-# install.py is invoked by an interpreter; Windows usually exposes "python" or
-# the "py" launcher rather than "python3", so probe in that order.
+# install.py needs a WORKING interpreter. On Windows "python3" is frequently an
+# unusable stub that Get-Command still reports - a cygwin symlink the native
+# shell cannot exec, or a Microsoft Store 0-byte alias - so probe candidates by
+# actually running "--version" and take the first that succeeds. Order: the py
+# launcher (most reliable on Windows), then python, then python3 (the usual name
+# on macOS / Linux, where py does not exist).
+function Test-Python($exe, $pre) {
+    try {
+        & $exe @($pre) "--version" *> $null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
 function Resolve-Python {
-    foreach ($candidate in @("python3", "python")) {
-        if (Get-Command $candidate -ErrorAction SilentlyContinue) {
-            return [pscustomobject]@{ Exe = $candidate; Pre = @() }
+    $candidates = @(
+        @{ Exe = "py";      Pre = @("-3") },
+        @{ Exe = "python";  Pre = @() },
+        @{ Exe = "python3"; Pre = @() }
+    )
+    foreach ($c in $candidates) {
+        if ((Get-Command $c.Exe -ErrorAction SilentlyContinue) -and (Test-Python $c.Exe $c.Pre)) {
+            return [pscustomobject]@{ Exe = $c.Exe; Pre = $c.Pre }
         }
     }
-    if (Get-Command "py" -ErrorAction SilentlyContinue) {
-        return [pscustomobject]@{ Exe = "py"; Pre = @("-3") }
-    }
-    throw "python3 / python is required to run the Project Context Hook installer"
+    throw "py / python / python3 is required to run the Project Context Hook installer (no working interpreter found)"
 }
 $python = Resolve-Python
 
@@ -77,7 +91,7 @@ $workDir = Join-Path ([System.IO.Path]::GetTempPath()) ("spellbook-pc-hook." + [
 New-Item -ItemType Directory -Force -Path $workDir | Out-Null
 try {
     foreach ($file in $Files) {
-        Invoke-WebRequest -Uri "$($BaseUrl.TrimEnd('/'))/$file" -OutFile (Join-Path $workDir $file)
+        Invoke-WebRequest -Uri "$($BaseUrl.TrimEnd('/'))/$file" -OutFile (Join-Path $workDir $file) -UseBasicParsing
     }
     & $python.Exe @($python.Pre) (Join-Path $workDir "install.py") $Action
     exit $LASTEXITCODE

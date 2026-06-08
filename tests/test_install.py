@@ -15,6 +15,9 @@ import tempfile
 INSTALL_PY = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "install.py"
 )
+SESSION_START = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hooks", "session-start"
+)
 MARKER_BEGIN = "<!-- BEGIN spellbook-skills:project-context -->"
 MARKER_END = "<!-- END spellbook-skills:project-context -->"
 
@@ -58,6 +61,9 @@ def main():
     def has(entries, needle):
         return any(needle in h.get("command", "") for e in entries for h in e["hooks"])
 
+    def commands(entries):
+        return [h.get("command", "") for e in entries for h in e["hooks"]]
+
     checks = []
 
     def check(cond, msg):
@@ -80,6 +86,8 @@ def main():
     full = json.load(open(codex_file))
     check(has(ss, "codeisland"), "Codex 保留 codeisland")
     check(has(ss, "session-start"), "Codex 已加我们的 hook")
+    our_cmd = next(cmd for cmd in commands(ss) if "session-start" in cmd)
+    check(sys.executable in our_cmd, "Codex hook 使用安装时实际可用的 Python 解释器")
     check("Stop" in full["hooks"], "Codex 保留 Stop 事件")
     check(len(ss) == 2, f"Codex SessionStart 共 2 条（实际 {len(ss)}）")
     ct = open(copilot_file).read()
@@ -176,6 +184,19 @@ def main():
     copilot_line = next((ln for ln in status_run.stdout.splitlines() if "Copilot" in ln), "")
     check("残缺" in copilot_line, "残缺 marker：status 显示需修复")
     check("已安装" not in copilot_line, "残缺 marker：status 不误报已安装")
+
+    print("=== 边界：session-start 在非 UTF-8 stdout 环境下仍输出 UTF-8 ===")
+    utf8_env = dict(os.environ)
+    utf8_env["PYTHONIOENCODING"] = "cp936"
+    hook_run = subprocess.run([sys.executable, SESSION_START], env=utf8_env,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    check(hook_run.returncode == 0, "session-start：非 UTF-8 环境运行成功")
+    try:
+        hook_run.stdout.decode("utf-8")
+        utf8_ok = True
+    except UnicodeDecodeError:
+        utf8_ok = False
+    check(utf8_ok, "session-start：stdout 可按 UTF-8 解码")
 
     shutil.rmtree(tmp)
     failed = [m for ok, m in checks if not ok]

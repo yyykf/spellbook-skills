@@ -7,10 +7,19 @@
   - Claude Code / Codex: hookSpecificOutput.additionalContext（嵌套，两家格式相同）
 
 JSON 由 json.dumps 生成，转义完备（含所有 U+0000–U+001F 控制字符）。
-依赖：python3（Codex 官方 hook 示例同样使用 python3）。
+依赖：Python 3；Codex 安装器会把安装时实际可用的解释器写入 hook command。
 """
 import json
 import os
+import sys
+
+# Windows 控制台默认可能是 GBK/cp936；Codex 读取 hook stdout 时需要稳定的
+# UTF-8 JSON 字节，不能依赖宿主 shell 的默认编码。
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 rules_path = os.path.join(script_dir, "project-context.md")
