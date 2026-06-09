@@ -58,7 +58,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path $env:CODEX_HOME | Out-Null
           New-Item -ItemType Directory -Force -Path $env:COPILOT_HOME | Out-Null
 
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action install
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action install -Target codex-fallback
 
           $hooksJson = Join-Path $env:CODEX_HOME "hooks.json"
           $data = Get-Content -LiteralPath $hooksJson -Raw | ConvertFrom-Json
@@ -109,8 +109,8 @@ jobs:
           '@
           python -c $validator
 
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action status
-          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action uninstall
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action status -Target codex-fallback
+          powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-project-context-hook.ps1 -Source .\hooks -Action uninstall -Target codex-fallback
 
           $payloadDir = Join-Path $env:SPELLBOOK_HOME "hooks"
           if (Test-Path -LiteralPath $payloadDir) {

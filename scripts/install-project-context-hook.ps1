@@ -3,6 +3,9 @@ param(
     [ValidateSet("install", "uninstall", "status")]
     [string] $Action = "install",
 
+    [ValidateSet("", "copilot", "codex-fallback", "all", "auto")]
+    [string] $Target = "",
+
     [string] $Source = "",
 
     [string] $BaseUrl = "https://raw.githubusercontent.com/yyykf/spellbook-skills/main/hooks",
@@ -14,25 +17,29 @@ $ErrorActionPreference = "Stop"
 
 if ($Help) {
     @"
-Install the optional Spellbook Project Context Hook for Codex and Copilot.
+Install the optional Spellbook Project Context Hook for Copilot and older Codex fallback.
 
 Wraps hooks/install.py so you can install the hook WITHOUT cloning the repo.
-Claude Code does not need this - it auto-loads the plugin hook. Only Codex /
-Copilot require this step.
+Claude Code and Codex 0.137.0+ auto-load the plugin hook.
+Use -Target auto to let the script install Codex fallback only when it can
+confirm an older Codex version; uncertain detection fails closed.
 
 Usage:
-  install-project-context-hook.ps1 [-Action install|uninstall|status]
-  install-project-context-hook.ps1 -Source .\hooks [-Action status]
+  install-project-context-hook.ps1 [-Action install|uninstall|status] [-Target copilot|codex-fallback|all|auto]
+  install-project-context-hook.ps1 -Source .\hooks [-Action status] [-Target copilot|codex-fallback|all|auto]
 
 Options:
   -Action    install (default), uninstall, or status.
+  -Target    Target platform. install defaults to copilot; uninstall/status
+             default to all. auto is install-only and only writes Codex
+             fallback when codex --version is confirmed below 0.137.0.
   -Source    Local hooks directory containing install.py and its payload files.
              If omitted, uses the checkout-local hooks directory when available,
              otherwise downloads from GitHub raw URLs.
   -BaseUrl   Remote base URL for downloads. Defaults to the main branch.
   -Help      Show this help.
 
-After installing on Codex, start Codex and run /hooks once to trust the hook.
+For Codex fallback installs, start Codex and run /hooks once to trust the hook.
 Requires py / python / python3 on PATH.
 "@ | Write-Output
     exit 0
@@ -69,6 +76,19 @@ function Resolve-Python {
 }
 $python = Resolve-Python
 
+function Invoke-InstallPy($installPy) {
+    $pythonArgs = @()
+    $pythonArgs += $python.Pre
+    $pythonArgs += $installPy
+    $pythonArgs += $Action
+    if ($Target) {
+        $pythonArgs += "--target"
+        $pythonArgs += $Target
+    }
+    & $python.Exe @pythonArgs
+    exit $LASTEXITCODE
+}
+
 # Prefer a local checkout when present (this script lives in scripts/, hooks/ is a sibling).
 if (-not $Source -and $PSScriptRoot) {
     $candidate = Join-Path (Split-Path -Parent $PSScriptRoot) "hooks"
@@ -82,8 +102,7 @@ if ($Source) {
     if (-not (Test-Path -LiteralPath $installPy -PathType Leaf)) {
         throw "install.py not found in source directory: $Source"
     }
-    & $python.Exe @($python.Pre) $installPy $Action
-    exit $LASTEXITCODE
+    Invoke-InstallPy $installPy
 }
 
 # No local checkout: download install.py and its payload into a temp dir, then run it there.
@@ -93,8 +112,7 @@ try {
     foreach ($file in $Files) {
         Invoke-WebRequest -Uri "$($BaseUrl.TrimEnd('/'))/$file" -OutFile (Join-Path $workDir $file) -UseBasicParsing
     }
-    & $python.Exe @($python.Pre) (Join-Path $workDir "install.py") $Action
-    exit $LASTEXITCODE
+    Invoke-InstallPy (Join-Path $workDir "install.py")
 } finally {
     Remove-Item -Recurse -Force -LiteralPath $workDir -ErrorAction SilentlyContinue
 }

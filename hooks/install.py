@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""安装/卸载 .project_context 规则注入到 Codex 与 Copilot。
+"""安装/卸载 .project_context 规则注入到 Copilot 与旧 Codex fallback。
 
 Claude Code 靠插件自动加载本目录的 hooks.json，无需本脚本。
-本脚本仅处理两个「不自动加载插件 hook」的平台：
-  - Codex：把 SessionStart hook 合并进 ~/.codex/hooks.json
+Codex 0.137.0+ 也会自动加载插件包内 hooks/hooks.json；首次仍需 /hooks 信任。
+本脚本现在只处理：
   - Copilot：把规则写进 ~/.copilot/copilot-instructions.md（personal 级，抗 compact）
+  - 旧 Codex / fallback：显式选择时，把 SessionStart hook 合并进 ~/.codex/hooks.json
 
 注入脚本与规则正文会先 copy 到稳定位置（默认 ~/.local/share/spellbook-skills/hooks/）。
 
@@ -15,15 +16,21 @@ Claude Code 靠插件自动加载本目录的 hooks.json，无需本脚本。
   - Copilot instructions 用 manifest 记录创建来源，只删本工具建的文件
 
 用法：
-  python3 install.py install      安装（Codex + Copilot）
-  python3 install.py uninstall    卸载（精确移除自己加的部分）
-  python3 install.py status       查看安装状态
+  python3 install.py install                         安装 Copilot instructions（默认）
+  python3 install.py install --target auto           自动判断是否需要旧 Codex fallback
+  python3 install.py install --target codex-fallback 安装旧 Codex fallback
+  python3 install.py install --target all            同时安装 Copilot + Codex fallback
+  python3 install.py uninstall                       卸载全部（精确移除自己加的部分）
+  python3 install.py uninstall --target copilot      只卸载 Copilot 部分
+  python3 install.py status                          查看全部安装状态
 
 环境变量覆盖路径（主要用于测试）：
   SPELLBOOK_HOME / CODEX_HOME / COPILOT_HOME
 """
+import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -45,6 +52,14 @@ HOME = os.path.expanduser("~")
 MARKER_BEGIN = "<!-- BEGIN spellbook-skills:project-context -->"
 MARKER_END = "<!-- END spellbook-skills:project-context -->"
 SENTINEL = ".spellbook-install-marker"  # 标记稳定目录由本工具创建
+
+TARGET_COPILOT = "copilot"
+TARGET_CODEX_FALLBACK = "codex-fallback"
+TARGET_ALL = "all"
+TARGET_AUTO = "auto"
+TARGET_NONE = "none"
+TARGET_CHOICES = (TARGET_COPILOT, TARGET_CODEX_FALLBACK, TARGET_ALL, TARGET_AUTO)
+CODEX_PLUGIN_HOOK_MIN_VERSION = (0, 137, 0)
 
 
 # ---------- 路径（均可被环境变量覆盖） ----------
@@ -253,6 +268,64 @@ def codex_status():
     return isinstance(session_start, list) and any(_is_our_codex(e) for e in session_start)
 
 
+def _parse_codex_version(text):
+    match = re.search(r"(\d+)\.(\d+)\.(\d+)", text)
+    if not match:
+        return None
+    return tuple(int(part) for part in match.groups())
+
+
+def _format_version(version):
+    return ".".join(str(part) for part in version)
+
+
+def _detect_codex_version():
+    codex = shutil.which("codex")
+    if not codex:
+        return None, "未找到 PATH 上的 codex 命令"
+    try:
+        proc = subprocess.run(
+            [codex, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, f"运行 codex --version 失败：{exc}"
+    output = "\n".join(part for part in (proc.stdout, proc.stderr) if part).strip()
+    if proc.returncode != 0:
+        return None, f"codex --version 退出码 {proc.returncode}：{output or '无输出'}"
+    version = _parse_codex_version(output)
+    if version is None:
+        return None, f"无法从 codex --version 输出解析版本：{output or '无输出'}"
+    return version, None
+
+
+def resolve_auto_install_target():
+    version, reason = _detect_codex_version()
+    if version is None:
+        raise SystemExit(
+            "❌ 无法自动判断 Codex 版本，未写入任何 Codex fallback 配置。\n"
+            f"   原因：{reason}\n"
+            "   如果你确认这是旧 Codex，或明确需要固定写入 ~/.codex/hooks.json，"
+            "请改用：--target codex-fallback"
+        )
+    if version < CODEX_PLUGIN_HOOK_MIN_VERSION:
+        print(
+            "ℹ️  检测到 Codex "
+            f"{_format_version(version)} < {_format_version(CODEX_PLUGIN_HOOK_MIN_VERSION)}，"
+            "将安装 Codex fallback。"
+        )
+        return TARGET_CODEX_FALLBACK
+    print(
+        "ℹ️  检测到 Codex "
+        f"{_format_version(version)} >= {_format_version(CODEX_PLUGIN_HOOK_MIN_VERSION)}，"
+        "Codex 使用插件 hooks/hooks.json；不写 ~/.codex/hooks.json fallback。"
+    )
+    return TARGET_NONE
+
+
 # ---------- Copilot（instructions + marker 块） ----------
 def _render_block():
     with open(installed_rules(), encoding="utf-8") as handle:
@@ -346,67 +419,135 @@ def copilot_status():
 
 
 # ---------- 子命令 ----------
-def _preflight():
-    """安装前校验：Codex hooks.json 结构合法、Copilot marker 配对，避免中途失败留半成品。"""
-    path = codex_hooks_file()
-    if os.path.exists(path):
-        data = _load_json_strict(path, {})
-        if not isinstance(data, dict):
-            raise SystemExit(f"❌ {path} 顶层不是 JSON 对象；未修改。")
-        hooks = data.get("hooks")
-        if hooks is not None and not isinstance(hooks, dict):
-            raise SystemExit(f"❌ {path} 的 hooks 不是对象；未修改。")
-        if isinstance(hooks, dict):
-            session_start = hooks.get("SessionStart")
-            if session_start is not None and not isinstance(session_start, list):
-                raise SystemExit(f"❌ {path} 的 SessionStart 不是数组；未修改。")
-    _check_copilot_markers()
+def _target_includes(target, selected):
+    return target == TARGET_ALL or target == selected
 
 
-def cmd_install():
-    _preflight()  # 校验失败时尚未 copy 任何文件，无半成品
+def _target_label(target):
+    if target == TARGET_ALL:
+        return "Copilot + Codex fallback"
+    if target == TARGET_CODEX_FALLBACK:
+        return "Codex fallback"
+    if target == TARGET_NONE:
+        return "Codex auto (no fallback needed)"
+    return "Copilot"
+
+
+def _preflight(target):
+    """安装前校验目标配置结构，避免中途失败留半成品。"""
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        path = codex_hooks_file()
+        if os.path.exists(path):
+            data = _load_json_strict(path, {})
+            if not isinstance(data, dict):
+                raise SystemExit(f"❌ {path} 顶层不是 JSON 对象；未修改。")
+            hooks = data.get("hooks")
+            if hooks is not None and not isinstance(hooks, dict):
+                raise SystemExit(f"❌ {path} 的 hooks 不是对象；未修改。")
+            if isinstance(hooks, dict):
+                session_start = hooks.get("SessionStart")
+                if session_start is not None and not isinstance(session_start, list):
+                    raise SystemExit(f"❌ {path} 的 SessionStart 不是数组；未修改。")
+    if _target_includes(target, TARGET_COPILOT):
+        _check_copilot_markers()
+
+
+def _remove_payload_if_unused():
+    if codex_status() or copilot_status():
+        return
+    remove_payload()
+
+
+def cmd_install(target):
+    if target == TARGET_NONE:
+        print("✅ 无需安装 Codex fallback")
+        print("   Codex:    0.137.0+ 使用插件 hooks/hooks.json；启用插件后运行 /hooks 信任即可。")
+        print("   Copilot:  未写入（如需 Copilot instructions，请运行不带 --target 的 install）")
+        return
+    _preflight(target)  # 校验失败时尚未 copy 任何文件，无半成品
     copy_payload()
-    codex_install()
-    copilot_install()
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        codex_install()
+    if _target_includes(target, TARGET_COPILOT):
+        copilot_install()
     print("✅ 安装完成")
+    print(f"   目标:     {_target_label(target)}")
     print(f"   稳定位置: {installed_hooks_dir()}")
-    print(f"   Codex:    已合并进 {codex_hooks_file()} 的 SessionStart")
-    print(f"   Copilot:  已写入 {copilot_instructions_file()}（marker 块）")
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        print(f"   Codex:    已合并进 {codex_hooks_file()} 的 SessionStart")
+    else:
+        print("   Codex:    未写入 fallback（Codex 0.137.0+ 使用插件 hooks/hooks.json）")
+    if _target_includes(target, TARGET_COPILOT):
+        print(f"   Copilot:  已写入 {copilot_instructions_file()}（marker 块）")
+    else:
+        print("   Copilot:  未写入")
     print()
-    print("⚠️  Codex 首次需信任：启动 Codex 后运行 /hooks 审核并信任本 hook（一次即可，无法脚本预信任）。")
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        print("⚠️  Codex fallback 首次需信任：启动 Codex 后运行 /hooks 审核并信任本 hook（一次即可，无法脚本预信任）。")
+    else:
+        print("ℹ️  Codex 0.137.0+ 无需本脚本写 hooks.json；启用插件后通过 /hooks 信任插件 hook 即可。")
     print("    Claude Code 无需本脚本——插件已自动加载 hooks/hooks.json。")
 
 
-def cmd_uninstall():
-    _check_copilot_markers()  # 残缺 marker 先中止，避免半卸载
-    codex_uninstall()
-    copilot_uninstall()  # 需在 remove_payload 之前读 manifest
-    remove_payload()
-    print("✅ 卸载完成：已从 Codex hooks.json、Copilot instructions 移除，并删除稳定位置文件。")
-    print("   注：Codex config.toml 的 [hooks.state] 残留条目无害（hash 对不上会被忽略），如需可手动清理含 session_start 的段。")
+def cmd_uninstall(target):
+    if _target_includes(target, TARGET_COPILOT):
+        _check_copilot_markers()  # 残缺 marker 先中止，避免半卸载
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        codex_uninstall()
+    if _target_includes(target, TARGET_COPILOT):
+        copilot_uninstall()  # 需在 remove_payload 之前读 manifest
+    _remove_payload_if_unused()
+    print(f"✅ 卸载完成：已从 {_target_label(target)} 精确移除本工具写入的配置。")
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        print("   注：Codex config.toml 的 [hooks.state] 残留条目无害（hash 对不上会被忽略），如需可手动清理含 session_start 的段。")
 
 
-def cmd_status():
+def cmd_status(target):
     print(f"稳定位置:     {'已安装' if os.path.isdir(installed_hooks_dir()) else '未安装'}  ({installed_hooks_dir()})")
-    print(f"Codex hook:   {'已安装' if codex_status() else '未安装'}  ({codex_hooks_file()})")
-    cpath = copilot_instructions_file()
-    broken = False
-    if os.path.exists(cpath):
-        with open(cpath, encoding="utf-8") as handle:
-            broken = not _markers_balanced(handle.read())
-    if broken:
-        print(f"Copilot 指令: ⚠️ marker 残缺/不配对，需手动修复  ({cpath})")
-    else:
-        print(f"Copilot 指令: {'已安装' if copilot_status() else '未安装'}  ({cpath})")
+    if _target_includes(target, TARGET_CODEX_FALLBACK):
+        print(f"Codex fallback: {'已安装' if codex_status() else '未安装'}  ({codex_hooks_file()})")
+    if _target_includes(target, TARGET_COPILOT):
+        cpath = copilot_instructions_file()
+        broken = False
+        if os.path.exists(cpath):
+            with open(cpath, encoding="utf-8") as handle:
+                broken = not _markers_balanced(handle.read())
+        if broken:
+            print(f"Copilot 指令:  ⚠️ marker 残缺/不配对，需手动修复  ({cpath})")
+        else:
+            print(f"Copilot 指令:  {'已安装' if copilot_status() else '未安装'}  ({cpath})")
+
+
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description="安装/卸载 Spellbook Project Context Hook。",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument("action", choices=("install", "uninstall", "status"))
+    parser.add_argument(
+        "--target",
+        choices=TARGET_CHOICES,
+        default=None,
+        help=(
+            "目标平台。install 默认 copilot；uninstall/status 默认 all。auto 仅支持 install。"
+            "codex-fallback 仅用于旧 Codex 或明确需要 ~/.codex/hooks.json 的场景。"
+        ),
+    )
+    return parser.parse_args(argv)
 
 
 def main():
+    args = _parse_args(sys.argv[1:])
+    target = args.target
+    if target is None:
+        target = TARGET_COPILOT if args.action == "install" else TARGET_ALL
+    elif target == TARGET_AUTO:
+        if args.action != "install":
+            raise SystemExit("❌ --target auto 仅支持 install；uninstall/status 请使用 all、copilot 或 codex-fallback。")
+        target = resolve_auto_install_target()
     actions = {"install": cmd_install, "uninstall": cmd_uninstall, "status": cmd_status}
-    if len(sys.argv) != 2 or sys.argv[1] not in actions:
-        print(__doc__)
-        print(f"用法: python3 {os.path.basename(__file__)} {{install|uninstall|status}}")
-        sys.exit(2)
-    actions[sys.argv[1]]()
+    actions[args.action](target)
 
 
 if __name__ == "__main__":

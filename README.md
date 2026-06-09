@@ -142,13 +142,16 @@ After installation, skills are namespaced by the plugin name:
 An **optional** SessionStart hook that injects framework-agnostic `.project_context/` "project memory" conventions into the agent at the start of every session. It is an enhancement — not a required step for using the plugin skills.
 
 - **Claude Code**: works automatically once the plugin is enabled — nothing to install.
-- **Codex / Copilot**: they don't auto-load plugin hooks, so install it once. No clone required:
+- **Codex 0.137.0+**: auto-loads this plugin's `hooks/hooks.json` once the plugin is enabled. Run `/hooks` once in Codex to trust it.
+- **Copilot / older Codex fallback**: the installer defaults to Copilot personal instructions only; older Codex releases, or setups that explicitly want `~/.codex/hooks.json`, should opt into the fallback target. No clone required:
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # Copilot (default)
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # auto-detect older Codex fallback
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # older Codex fallback
   ```
 
-  On Windows, use the `install-project-context-hook.ps1` installer instead (see the guide below). From a local checkout you can run `python3 hooks/install.py install`. On Codex, start it afterward and run `/hooks` once to trust the hook.
+  On Windows, use the `install-project-context-hook.ps1` installer instead (see the guide below). From a local checkout you can run `python3 hooks/install.py install`; for older Codex fallback you can first try `python3 hooks/install.py install --target auto`, or use `--target codex-fallback` when confirmed. For Codex fallback installs, start Codex afterward and run `/hooks` once to trust the hook.
 
 See [docs/project-context-hook.md](./docs/project-context-hook.md) for the full guide — install / uninstall, per-platform differences, and design notes.
 
