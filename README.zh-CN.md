@@ -142,13 +142,16 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 **可选**的 SessionStart hook，在会话开始时注入框架无关的 `.project_context/`「项目记忆库」约定。它是增强能力，并非使用插件 skills 的必需步骤。
 
 - **Claude Code**：启用插件即自动生效，无需安装。
-- **Codex / Copilot**：它们不自动加载插件 hook，需手动安装一次。无需 clone 仓库：
+- **Codex 0.137.0+**：启用插件后自动加载插件内 `hooks/hooks.json`，首次需在 Codex 中跑一次 `/hooks` 信任该 hook。
+- **Copilot / 旧 Codex fallback**：安装脚本默认只写 Copilot personal instructions；旧 Codex 或明确需要 `~/.codex/hooks.json` 固定安装时，显式选择 fallback target。无需 clone 仓库：
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # Copilot（默认）
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # 自动判断旧 Codex fallback
+  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # 旧 Codex fallback
   ```
 
-  Windows 改用 `install-project-context-hook.ps1` 安装脚本（见下方完整指引）。若已 clone 仓库，也可跑 `python3 hooks/install.py install`。Codex 上安装后需启动 Codex 跑一次 `/hooks` 信任该 hook。
+  Windows 改用 `install-project-context-hook.ps1` 安装脚本（见下方完整指引）。若已 clone 仓库，也可跑 `python3 hooks/install.py install`；旧 Codex fallback 可先试 `python3 hooks/install.py install --target auto`，确认旧版本或明确固定写入时用 `--target codex-fallback`。走 Codex fallback 安装后同样需启动 Codex 跑一次 `/hooks` 信任该 hook。
 
 完整指引（安装 / 卸载、三平台差异、设计说明）见 [docs/project-context-hook.zh-CN.md](./docs/project-context-hook.zh-CN.md)。
 

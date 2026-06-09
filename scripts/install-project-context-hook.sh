@@ -10,30 +10,35 @@ files=(
 )
 
 action="install"
+target=""
 source_dir=""
 base_url="${SPELLBOOK_PC_HOOK_BASE_URL:-https://raw.githubusercontent.com/yyykf/spellbook-skills/main/hooks}"
 
 usage() {
   cat <<'USAGE'
-Install the optional Spellbook Project Context Hook for Codex and Copilot.
+Install the optional Spellbook Project Context Hook for Copilot and older Codex fallback.
 
 This wraps hooks/install.py so you can install the hook WITHOUT cloning the
-repository. Claude Code does not need this — it auto-loads the plugin hook.
-Only Codex / Copilot require this step.
+repository. Claude Code and Codex 0.137.0+ auto-load the plugin hook.
+Use --target auto to let the script install Codex fallback only when it can
+confirm an older Codex version; uncertain detection fails closed.
 
 Usage:
-  install-project-context-hook.sh [install|uninstall|status]
-  install-project-context-hook.sh --source ./hooks [install|uninstall|status]
+  install-project-context-hook.sh [install|uninstall|status] [--target copilot|codex-fallback|all|auto]
+  install-project-context-hook.sh --source ./hooks [install|uninstall|status] [--target copilot|codex-fallback|all|auto]
 
 Options:
   --source   Local hooks directory containing install.py and its payload files.
              If omitted, the script uses the checkout-local hooks directory
              when available, otherwise downloads from GitHub raw URLs.
+  --target   Target platform. install defaults to copilot; uninstall/status
+             default to all. auto is install-only and only writes Codex
+             fallback when codex --version is confirmed below 0.137.0.
   --base-url Remote base URL for downloads. Defaults to the main branch of
              yyykf/spellbook-skills.
   -h, --help Show this help.
 
-After installing on Codex, start Codex and run /hooks once to trust the hook.
+For Codex fallback installs, start Codex and run /hooks once to trust the hook.
 Requires python3.
 USAGE
 }
@@ -47,6 +52,14 @@ while [[ $# -gt 0 ]]; do
     --source)
       [[ $# -ge 2 ]] || { echo "--source requires a value" >&2; exit 2; }
       source_dir="$2"
+      shift 2
+      ;;
+    --target)
+      [[ $# -ge 2 ]] || { echo "--target requires a value" >&2; exit 2; }
+      case "$2" in
+        copilot|codex-fallback|all|auto) target="$2" ;;
+        *) echo "--target must be one of: copilot, codex-fallback, all, auto" >&2; exit 2 ;;
+      esac
       shift 2
       ;;
     --base-url)
@@ -71,6 +84,11 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
+install_args=("$action")
+if [[ -n "$target" ]]; then
+  install_args+=("--target" "$target")
+fi
+
 # Prefer a local checkout when present (this script lives in scripts/, hooks/ is a sibling).
 if [[ -z "$source_dir" ]]; then
   script_path="${BASH_SOURCE[0]:-}"
@@ -88,7 +106,7 @@ if [[ -n "$source_dir" ]]; then
     echo "install.py not found in source directory: $source_dir" >&2
     exit 1
   fi
-  exec python3 "$source_dir/install.py" "$action"
+  exec python3 "$source_dir/install.py" "${install_args[@]}"
 fi
 
 # No local checkout: download install.py and its payload into a temp dir, then run it there.
@@ -105,4 +123,4 @@ for file in "${files[@]}"; do
   curl -fsSL "${base_url%/}/$file" -o "$work_dir/$file"
 done
 
-python3 "$work_dir/install.py" "$action"
+python3 "$work_dir/install.py" "${install_args[@]}"
