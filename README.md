@@ -18,7 +18,7 @@ Personal skills library for daily workflows, packaged as Claude Code, GitHub Cop
 
 ## Overview
 
-Spellbook Skills is a collection of agent skills for daily development workflows — covering test-driven development, git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session start (see the [Project Context Hook](#project-context-hook) section below).
+Spellbook Skills is a collection of agent skills for daily development workflows — covering test-driven development, git worktrees, code review, API querying, DDD architecture guidance, and more. It also ships a **Project Context Hook** that injects framework-agnostic project-memory conventions into the agent at session and subagent start (see the [Project Context Hook](#project-context-hook) section below).
 
 <p align="center">
   <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
@@ -139,10 +139,10 @@ After installation, skills are namespaced by the plugin name:
 
 ## Project Context Hook
 
-An **optional** SessionStart hook that injects framework-agnostic `.project_context/` "project memory" conventions into the agent at the start of every session. It is an enhancement — not a required step for using the plugin skills.
+An **optional** SessionStart/SubagentStart hook that injects framework-agnostic `.project_context/` "project memory" conventions into the agent at the start of every main session and subagent. It is an enhancement — not a required step for using the plugin skills.
 
-- **Claude Code**: works automatically once the plugin is enabled — nothing to install.
-- **Codex 0.137.0+**: auto-loads this plugin's `hooks/hooks.json` once the plugin is enabled. Run `/hooks` once in Codex to trust it.
+- **Claude Code**: works automatically once the plugin is enabled, including subagent starts — nothing to install.
+- **Codex 0.137.0+**: auto-loads this plugin's `hooks/hooks.json` once the plugin is enabled, including subagent starts. Run `/hooks` once in Codex to trust it.
 - **Copilot / older Codex fallback**: the installer defaults to Copilot personal instructions only; older Codex releases, or setups that explicitly want `~/.codex/hooks.json`, should opt into the fallback target. No clone required:
 
   ```bash

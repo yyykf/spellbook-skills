@@ -2,7 +2,7 @@
 
 [English](./project-context-hook.md)
 
-会话开始时自动向 coding agent 注入 `.project_context/`「项目记忆库」约定，让 agent 全程遵守——把架构决策、领域术语等长期知识，以及探索 / 执行 / 审查等过程记录，沉淀到一个**框架无关**的目录里（不绑定 OpenSpec / Trellis 等具体工作流框架）。
+会话开始和子代理启动时自动向 coding agent 注入 `.project_context/`「项目记忆库」约定，让 agent 全程遵守——把架构决策、领域术语等长期知识，以及探索 / 执行 / 审查等过程记录，沉淀到一个**框架无关**的目录里（不绑定 OpenSpec / Trellis 等具体工作流框架）。
 
 被注入的规则正文见 [`hooks/project-context.md`](../hooks/project-context.md)。
 
@@ -10,11 +10,11 @@
 
 ### Claude Code ✅ 自动生效
 
-启用本插件即可。Claude Code 自动发现 `hooks/hooks.json`，在会话 `startup` / `clear` / `compact` 时触发，无需任何配置。
+启用本插件即可。Claude Code 自动发现 `hooks/hooks.json`，在 `SessionStart`（`startup` / `clear` / `compact`）和 `SubagentStart` 时触发，无需任何配置。
 
 ### Codex ✅ 自动生效（0.137.0+）
 
-安装并启用本插件即可。Codex 0.137.0+ 会自动发现插件包内的 `hooks/hooks.json`，并在会话 `startup` / `clear` / `compact` 时触发。
+安装并启用本插件即可。Codex 0.137.0+ 会自动发现插件包内的 `hooks/hooks.json`，并在 `SessionStart`（`startup` / `clear` / `compact`）和 `SubagentStart` 时触发。
 
 > **⚠️ Codex 首次需信任**：启动 Codex 后跑一次 `/hooks` 审核并信任本插件 hook（一次即可）。这是 Codex 的安全门控，无法由插件或脚本预信任。
 
@@ -67,7 +67,7 @@ Windows 本地 checkout 下，`scripts/install-project-context-hook.cmd` / `.bat
 - 把 `session-start` + `project-context.md` copy 到稳定位置 `~/.local/share/spellbook-skills/hooks/`（不随插件版本号变，升级重跑即可）
 - **默认 target（Copilot）**：把规则写进 `~/.copilot/copilot-instructions.md`（personal 级、抗 compact），用 marker 块包裹
 - **`--target auto`**：运行 `codex --version`；只有确认 `< 0.137.0` 时才安装 Codex fallback，确认 `>= 0.137.0` 时不写 fallback，无法判断时失败且不写配置
-- **`--target codex-fallback`**：把 SessionStart hook 安全合并进 `~/.codex/hooks.json`，保留你已有的其它 hook（如 codeisland）
+- **`--target codex-fallback`**：把 SessionStart 和 SubagentStart hooks 安全合并进 `~/.codex/hooks.json`，保留你已有的其它 hook（如 codeisland）
 - **`--target all`**：同时执行 Copilot 与 Codex fallback 两条路径
 
 `uninstall` 默认卸载全部，靠脚本路径 / marker 块精确移除自己加的部分，不碰他人配置；也可用 `--target copilot` / `--target codex-fallback` 只卸载其中一边。重复 `install` 幂等。
@@ -79,6 +79,7 @@ Windows 本地 checkout 下，`scripts/install-project-context-hook.cmd` / `.bat
 ## 设计说明（为什么这样做）
 
 - **Codex 为什么通常不再需要手动 install**：实测（codex-cli 0.137.0，2026-06-08）Codex 会自动发现已安装、已启用插件包内的 `hooks/hooks.json`，并把它列为 `source=plugin`；首次状态为 `untrusted`，需 `/hooks` 信任一次。旧结论（codex-cli 0.136.0）已过期；扩平台时仍以目标机器实际行为为准。
+- **为什么显式配置 SubagentStart**：子代理使用独立生命周期事件，不依赖主会话的 SessionStart hook。这里把同一个脚本同时注册到两个事件，并让脚本返回匹配的 `hookSpecificOutput.hookEventName`，确保上下文注入到正确的会话范围。
 - **Copilot 为什么用 instructions 而非 hook**：Copilot 的 `sessionStart` hook 没有 compact 后重注入机制（只有 `preCompact`），压缩后规则会丢；而 `~/.copilot/copilot-instructions.md`（personal 级、优先级最高）作为持久指令注入，不受 compact 影响，更可靠。
 
 ## compact（上下文压缩）行为
