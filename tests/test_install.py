@@ -67,13 +67,19 @@ def main():
             with open(copilot_file, "w") as handle:
                 handle.write(copilot)
 
+    def codex_event(event_name):
+        return json.load(open(codex_file)).get("hooks", {}).get(event_name, [])
+
     def codex_ss():
-        return json.load(open(codex_file))["hooks"]["SessionStart"]
+        return codex_event("SessionStart")
+
+    def codex_sa():
+        return codex_event("SubagentStart")
 
     def codex_hook_count():
         if not os.path.exists(codex_file):
             return 0
-        return len(codex_ss())
+        return len(codex_ss()) + len(codex_sa())
 
     def has(entries, needle):
         return any(needle in h.get("command", "") for e in entries for h in e["hooks"])
@@ -103,6 +109,7 @@ def main():
     full = json.load(open(codex_file))
     check(has(ss, "codeisland"), "Codex 保留 codeisland")
     check(not has(ss, "session-start"), "默认 install 不写 Codex fallback hook")
+    check("SubagentStart" not in full["hooks"], "默认 install 不写 Codex SubagentStart fallback hook")
     check("Stop" in full["hooks"], "Codex 保留 Stop 事件")
     check(len(ss) == 1, f"默认 install 后 Codex SessionStart 仍 1 条（实际 {len(ss)}）")
     ct = open(copilot_file).read()
@@ -147,20 +154,33 @@ def main():
     full = json.load(open(codex_file))
     check(has(ss, "codeisland"), "target=all：Codex 保留 codeisland")
     check(has(ss, "session-start"), "target=all：Codex 已加 fallback hook")
+    check(has(codex_sa(), "session-start"), "target=all：Codex 已加 SubagentStart fallback hook")
+    check(codex_sa()[0].get("matcher") is None, "target=all：SubagentStart 不限定 agent_type matcher")
     our_cmd = next(cmd for cmd in commands(ss) if "session-start" in cmd)
     check(sys.executable in our_cmd, "target=all：Codex hook 使用安装时实际可用的 Python 解释器")
     check("Stop" in full["hooks"], "target=all：Codex 保留 Stop 事件")
     check(len(ss) == 2, f"target=all：Codex SessionStart 共 2 条（实际 {len(ss)}）")
+    check(len(codex_sa()) == 1, f"target=all：Codex SubagentStart 共 1 条（实际 {len(codex_sa())}）")
     check("BEGIN spellbook-skills" in open(copilot_file).read(), "target=all：Copilot 已加 marker 块")
 
     print("=== target=codex-fallback 只安装 Codex fallback ===")
     reset(codex='{"hooks": {"SessionStart": []}}', copilot="# 用户 Copilot 规则\n")
     run("install", "--target", "codex-fallback")
-    check(codex_hook_count() == 1 and has(codex_ss(), "session-start"), "target=codex-fallback：只写 Codex hook")
+    check(
+        codex_hook_count() == 2
+        and has(codex_ss(), "session-start")
+        and len(codex_sa()) == 1
+        and has(codex_sa(), "session-start"),
+        "target=codex-fallback：只写 Codex SessionStart/SubagentStart hooks",
+    )
     check("spellbook-skills" not in open(copilot_file).read(), "target=codex-fallback：不写 Copilot instructions")
     run("uninstall", "--target", "codex-fallback")
-    residual = json.load(open(codex_file)).get("hooks", {}).get("SessionStart")
-    check(residual in (None, []), "target=codex-fallback：卸载后 Codex 无残留")
+    residual_hooks = json.load(open(codex_file)).get("hooks", {})
+    check(
+        residual_hooks.get("SessionStart") in (None, [])
+        and residual_hooks.get("SubagentStart") in (None, []),
+        "target=codex-fallback：卸载后 Codex 无残留",
+    )
     check(os.path.isfile(copilot_file), "target=codex-fallback：不删除 Copilot 用户文件")
 
     print("=== target=copilot 只安装 Copilot ===")
@@ -176,7 +196,13 @@ def main():
     reset(codex='{"hooks": {"SessionStart": []}}', copilot="# 用户 Copilot 规则\n")
     write_fake_codex("codex-cli 0.136.0")
     run("install", "--target", "auto")
-    check(codex_hook_count() == 1 and has(codex_ss(), "session-start"), "target=auto：0.136.0 自动写 Codex fallback")
+    check(
+        codex_hook_count() == 2
+        and has(codex_ss(), "session-start")
+        and len(codex_sa()) == 1
+        and has(codex_sa(), "session-start"),
+        "target=auto：0.136.0 自动写 Codex SessionStart/SubagentStart fallback",
+    )
     check("spellbook-skills" not in open(copilot_file).read(), "target=auto：不顺手写 Copilot")
 
     print("=== target=auto：现代 Codex 不安装 fallback ===")
@@ -184,6 +210,7 @@ def main():
     write_fake_codex("codex-cli 0.137.0")
     run("install", "--target", "auto")
     check(codex_hook_count() == 0, "target=auto：0.137.0 不写 Codex fallback")
+    check(len(codex_sa()) == 0, "target=auto：0.137.0 不写 Codex SubagentStart fallback")
     check("spellbook-skills" not in open(copilot_file).read(), "target=auto：现代 Codex 不写 Copilot")
     check(not os.path.isdir(env["SPELLBOOK_HOME"]), "target=auto：现代 Codex 不 copy payload")
 
@@ -216,6 +243,12 @@ def main():
     check(run_fails("install", "--target", "codex-fallback"), "类型异常：codex-fallback install 非 0 退出")
     check(open(codex_file).read() == '{"hooks": {"SessionStart": {}}}', "类型异常：原文件未被破坏")
     check(not os.path.isdir(env["SPELLBOOK_HOME"]), "类型异常：预检拦截，未 copy payload")
+
+    print("=== 边界：SubagentStart 类型异常应被拒绝、不破坏文件、无半成品 ===")
+    reset(codex='{"hooks": {"SessionStart": [], "SubagentStart": {}}}')
+    check(run_fails("install", "--target", "codex-fallback"), "SubagentStart 类型异常：codex-fallback install 非 0 退出")
+    check(open(codex_file).read() == '{"hooks": {"SessionStart": [], "SubagentStart": {}}}', "SubagentStart 类型异常：原文件未被破坏")
+    check(not os.path.isdir(env["SPELLBOOK_HOME"]), "SubagentStart 类型异常：预检拦截，未 copy payload")
 
     print("=== 边界：损坏 JSON 应被拒绝、不修改 ===")
     reset(codex="{ not json ")
@@ -272,6 +305,19 @@ def main():
     except UnicodeDecodeError:
         utf8_ok = False
     check(utf8_ok, "session-start：stdout 可按 UTF-8 解码")
+
+    subagent_hook_run = subprocess.run(
+        [sys.executable, SESSION_START],
+        input=json.dumps({"hook_event_name": "SubagentStart"}).encode("utf-8"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    check(subagent_hook_run.returncode == 0, "session-start：SubagentStart 输入运行成功")
+    subagent_payload = json.loads(subagent_hook_run.stdout.decode("utf-8"))
+    check(
+        subagent_payload["hookSpecificOutput"]["hookEventName"] == "SubagentStart",
+        "session-start：SubagentStart 输入输出匹配的 hookEventName",
+    )
 
     shutil.rmtree(tmp)
     failed = [m for ok, m in checks if not ok]

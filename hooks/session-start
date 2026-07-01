@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SessionStart hook — 注入 .project_context 项目记忆库规则。
+"""SessionStart/SubagentStart hook — 注入 .project_context 项目记忆库规则。
 
 跨平台输出（同一脚本适配多家 CLI）：
   - Cursor:              additional_context（snake_case）
@@ -24,6 +24,28 @@ for _stream in (sys.stdout, sys.stderr):
 script_dir = os.path.dirname(os.path.abspath(__file__))
 rules_path = os.path.join(script_dir, "project-context.md")
 
+
+def _hook_event_name():
+    """同一脚本挂到 SessionStart/SubagentStart 时，输出必须回填匹配的事件名。"""
+    if sys.stdin.isatty():
+        return "SessionStart"
+    try:
+        raw = sys.stdin.read()
+    except OSError:
+        return "SessionStart"
+    if not raw.strip():
+        return "SessionStart"
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return "SessionStart"
+    event_name = None
+    if isinstance(payload, dict):
+        event_name = payload.get("hook_event_name") or payload.get("hookEventName")
+    if event_name in ("SessionStart", "SubagentStart"):
+        return event_name
+    return "SessionStart"
+
 try:
     with open(rules_path, encoding="utf-8") as handle:
         rules = handle.read()
@@ -39,7 +61,7 @@ elif os.environ.get("COPILOT_CLI"):
 else:
     payload = {
         "hookSpecificOutput": {
-            "hookEventName": "SessionStart",
+            "hookEventName": _hook_event_name(),
             "additionalContext": context,
         }
     }

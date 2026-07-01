@@ -2,7 +2,7 @@
 
 [中文](./project-context-hook.zh-CN.md)
 
-At session start, automatically inject the `.project_context/` "project memory" conventions into the coding agent so it follows them throughout — capturing long-term knowledge (architecture decisions, domain terms) and process records (exploration / execution / review) into a **framework-agnostic** directory (not tied to OpenSpec / Trellis or any specific workflow framework).
+At session start and subagent start, automatically inject the `.project_context/` "project memory" conventions into the coding agent so it follows them throughout — capturing long-term knowledge (architecture decisions, domain terms) and process records (exploration / execution / review) into a **framework-agnostic** directory (not tied to OpenSpec / Trellis or any specific workflow framework).
 
 The injected rules live in [`hooks/project-context.md`](../hooks/project-context.md).
 
@@ -10,11 +10,11 @@ The injected rules live in [`hooks/project-context.md`](../hooks/project-context
 
 ### Claude Code ✅ automatic
 
-Enable the plugin and you're done. Claude Code auto-discovers `hooks/hooks.json` and fires on `startup` / `clear` / `compact`. No configuration needed.
+Enable the plugin and you're done. Claude Code auto-discovers `hooks/hooks.json` and fires on `SessionStart` (`startup` / `clear` / `compact`) and `SubagentStart`. No configuration needed.
 
 ### Codex ✅ automatic (0.137.0+)
 
-Install and enable this plugin. Codex 0.137.0+ auto-discovers the plugin-bundled `hooks/hooks.json` file and fires it on session `startup` / `clear` / `compact`.
+Install and enable this plugin. Codex 0.137.0+ auto-discovers the plugin-bundled `hooks/hooks.json` file and fires it on `SessionStart` (`startup` / `clear` / `compact`) and `SubagentStart`.
 
 > **⚠️ Codex requires first-time trust**: after enabling the plugin, start Codex and run `/hooks` once to review and trust this plugin hook. This is Codex's security gate and cannot be pre-trusted by a plugin or script.
 
@@ -67,7 +67,7 @@ What `install` does:
 - Copies `session-start` + `project-context.md` to a stable location `~/.local/share/spellbook-skills/hooks/` (version-independent; just re-run after upgrades)
 - **Default target (Copilot)**: writes the rules into `~/.copilot/copilot-instructions.md` (personal scope, compaction-proof), wrapped in a marker block
 - **`--target auto`**: runs `codex --version`; installs Codex fallback only when it confirms `< 0.137.0`, skips fallback when it confirms `>= 0.137.0`, and fails without writing config if it cannot decide
-- **`--target codex-fallback`**: safely merges a SessionStart hook into `~/.codex/hooks.json`, preserving your existing hooks (e.g. codeisland)
+- **`--target codex-fallback`**: safely merges SessionStart and SubagentStart hooks into `~/.codex/hooks.json`, preserving your existing hooks (e.g. codeisland)
 - **`--target all`**: installs both Copilot and Codex fallback paths
 
 `uninstall` defaults to removing all script-managed entries (by script path / marker block) without touching others; use `--target copilot` / `--target codex-fallback` to remove only one side. Repeated `install` is idempotent.
@@ -79,6 +79,7 @@ What `install` does:
 ## Design notes (why it works this way)
 
 - **Why Codex usually no longer needs manual install**: verified (codex-cli 0.137.0, 2026-06-08) that Codex auto-discovers `hooks/hooks.json` inside installed, enabled plugin bundles and lists it as `source=plugin`; first-time status is `untrusted`, so `/hooks` must trust it once. The older codex-cli 0.136.0 conclusion is stale; defer to actual runtime behavior on the target machine when expanding platform support.
+- **Why SubagentStart is explicit**: subagents use a separate lifecycle event instead of relying on the main SessionStart hook. The same script is registered for both events and returns the matching `hookSpecificOutput.hookEventName`, so the context is injected into the right conversation scope.
 - **Why Copilot uses instructions instead of a hook**: Copilot's `sessionStart` hook has no post-compaction re-injection (only `preCompact`), so rules are lost after compaction; whereas `~/.copilot/copilot-instructions.md` (personal scope, highest priority) is injected as persistent instructions, unaffected by compaction.
 
 ## Compaction behavior

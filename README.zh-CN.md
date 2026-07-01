@@ -18,7 +18,7 @@
 
 ## 概览
 
-Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖测试驱动开发、git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在会话开始时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
+Spellbook Skills 是一组面向日常开发工作流的 Agent 技能集合，涵盖测试驱动开发、git worktree、代码审查、API 查询、DDD 架构指导等方面。此外还提供 **Project Context Hook**，在主会话和子代理启动时向 Agent 注入框架无关的项目记忆库约定（详见下方 [Project Context Hook](#project-context-hook项目记忆库) 一节）。
 
 <p align="center">
   <img src="./assets/workflow.png" alt="Spellbook Skills workflow coverage across TDD loops, git flow, review loops, YApi docs, Java DDD, Project Context Hook, and AGENTS.md" width="100%">
@@ -139,10 +139,10 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 
 ## Project Context Hook（项目记忆库）
 
-**可选**的 SessionStart hook，在会话开始时注入框架无关的 `.project_context/`「项目记忆库」约定。它是增强能力，并非使用插件 skills 的必需步骤。
+**可选**的 SessionStart/SubagentStart hook，在主会话和子代理启动时注入框架无关的 `.project_context/`「项目记忆库」约定。它是增强能力，并非使用插件 skills 的必需步骤。
 
-- **Claude Code**：启用插件即自动生效，无需安装。
-- **Codex 0.137.0+**：启用插件后自动加载插件内 `hooks/hooks.json`，首次需在 Codex 中跑一次 `/hooks` 信任该 hook。
+- **Claude Code**：启用插件即自动生效，子代理启动也会注入，无需安装。
+- **Codex 0.137.0+**：启用插件后自动加载插件内 `hooks/hooks.json`，子代理启动也会注入；首次需在 Codex 中跑一次 `/hooks` 信任该 hook。
 - **Copilot / 旧 Codex fallback**：安装脚本默认只写 Copilot personal instructions；旧 Codex 或明确需要 `~/.codex/hooks.json` 固定安装时，显式选择 fallback target。无需 clone 仓库：
 
   ```bash

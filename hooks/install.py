@@ -5,7 +5,7 @@ Claude Code 靠插件自动加载本目录的 hooks.json，无需本脚本。
 Codex 0.137.0+ 也会自动加载插件包内 hooks/hooks.json；首次仍需 /hooks 信任。
 本脚本现在只处理：
   - Copilot：把规则写进 ~/.copilot/copilot-instructions.md（personal 级，抗 compact）
-  - 旧 Codex / fallback：显式选择时，把 SessionStart hook 合并进 ~/.codex/hooks.json
+  - 旧 Codex / fallback：显式选择时，把 SessionStart/SubagentStart hooks 合并进 ~/.codex/hooks.json
 
 注入脚本与规则正文会先 copy 到稳定位置（默认 ~/.local/share/spellbook-skills/hooks/）。
 
@@ -60,6 +60,7 @@ TARGET_AUTO = "auto"
 TARGET_NONE = "none"
 TARGET_CHOICES = (TARGET_COPILOT, TARGET_CODEX_FALLBACK, TARGET_ALL, TARGET_AUTO)
 CODEX_PLUGIN_HOOK_MIN_VERSION = (0, 137, 0)
+CODEX_CONTEXT_HOOK_EVENTS = ("SessionStart", "SubagentStart")
 
 
 # ---------- 路径（均可被环境变量覆盖） ----------
@@ -183,9 +184,8 @@ def _command(args):
     return " ".join(_quote_command_arg(arg) for arg in args)
 
 
-def _codex_entry():
-    return {
-        "matcher": "startup|resume|clear|compact",
+def _codex_entry(event_name):
+    entry = {
         "hooks": [
             {
                 "type": "command",
@@ -194,6 +194,9 @@ def _codex_entry():
             }
         ],
     }
+    if event_name == "SessionStart":
+        entry["matcher"] = "startup|resume|clear|compact"
+    return entry
 
 
 def _is_our_codex(entry):
@@ -212,25 +215,33 @@ def _is_our_codex(entry):
     return False
 
 
-def _require_codex_session_start(data, path):
-    """校验并返回 (hooks_dict, session_start_list)；结构异常则中止，不破坏文件。"""
+def _require_codex_event(hooks, event_name, path):
+    entries = hooks.setdefault(event_name, [])
+    if not isinstance(entries, list):
+        raise SystemExit(f"❌ {path} 的 {event_name} 不是数组；未修改，请手动检查。")
+    return entries
+
+
+def _require_codex_context_events(data, path):
+    """校验并返回 hooks_dict；结构异常则中止，不破坏文件。"""
     if not isinstance(data, dict):
         raise SystemExit(f"❌ {path} 顶层不是 JSON 对象；未修改，请手动检查。")
     hooks = data.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise SystemExit(f"❌ {path} 的 hooks 不是对象；未修改，请手动检查。")
-    session_start = hooks.setdefault("SessionStart", [])
-    if not isinstance(session_start, list):
-        raise SystemExit(f"❌ {path} 的 SessionStart 不是数组；未修改，请手动检查。")
-    return hooks, session_start
+    for event_name in CODEX_CONTEXT_HOOK_EVENTS:
+        _require_codex_event(hooks, event_name, path)
+    return hooks
 
 
 def codex_install():
     path = codex_hooks_file()
     data = _load_json_strict(path, {})
-    _, session_start = _require_codex_session_start(data, path)
-    session_start[:] = [e for e in session_start if not _is_our_codex(e)]  # 幂等
-    session_start.append(_codex_entry())
+    hooks = _require_codex_context_events(data, path)
+    for event_name in CODEX_CONTEXT_HOOK_EVENTS:
+        entries = hooks[event_name]
+        entries[:] = [e for e in entries if not _is_our_codex(e)]  # 幂等
+        entries.append(_codex_entry(event_name))
     _write_json(path, data)
 
 
@@ -244,12 +255,13 @@ def codex_uninstall():
     hooks = data.get("hooks")
     if not isinstance(hooks, dict):
         return
-    session_start = hooks.get("SessionStart")
-    if not isinstance(session_start, list):
-        return
-    session_start[:] = [e for e in session_start if not _is_our_codex(e)]
-    if not session_start:
-        del hooks["SessionStart"]
+    for event_name in CODEX_CONTEXT_HOOK_EVENTS:
+        entries = hooks.get(event_name)
+        if not isinstance(entries, list):
+            continue
+        entries[:] = [e for e in entries if not _is_our_codex(e)]
+        if not entries:
+            del hooks[event_name]
     _write_json(path, data)
 
 
@@ -264,8 +276,31 @@ def codex_status():
         return False
     if not isinstance(data, dict) or not isinstance(data.get("hooks"), dict):
         return False
-    session_start = data["hooks"].get("SessionStart")
-    return isinstance(session_start, list) and any(_is_our_codex(e) for e in session_start)
+    return any(
+        isinstance(data["hooks"].get(event_name), list)
+        and any(_is_our_codex(e) for e in data["hooks"][event_name])
+        for event_name in CODEX_CONTEXT_HOOK_EVENTS
+    )
+
+
+def codex_installed_events():
+    path = codex_hooks_file()
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return []
+    hooks = data.get("hooks") if isinstance(data, dict) else None
+    if not isinstance(hooks, dict):
+        return []
+    return [
+        event_name
+        for event_name in CODEX_CONTEXT_HOOK_EVENTS
+        if isinstance(hooks.get(event_name), list)
+        and any(_is_our_codex(e) for e in hooks[event_name])
+    ]
 
 
 def _parse_codex_version(text):
@@ -445,9 +480,10 @@ def _preflight(target):
             if hooks is not None and not isinstance(hooks, dict):
                 raise SystemExit(f"❌ {path} 的 hooks 不是对象；未修改。")
             if isinstance(hooks, dict):
-                session_start = hooks.get("SessionStart")
-                if session_start is not None and not isinstance(session_start, list):
-                    raise SystemExit(f"❌ {path} 的 SessionStart 不是数组；未修改。")
+                for event_name in CODEX_CONTEXT_HOOK_EVENTS:
+                    entries = hooks.get(event_name)
+                    if entries is not None and not isinstance(entries, list):
+                        raise SystemExit(f"❌ {path} 的 {event_name} 不是数组；未修改。")
     if _target_includes(target, TARGET_COPILOT):
         _check_copilot_markers()
 
@@ -474,7 +510,7 @@ def cmd_install(target):
     print(f"   目标:     {_target_label(target)}")
     print(f"   稳定位置: {installed_hooks_dir()}")
     if _target_includes(target, TARGET_CODEX_FALLBACK):
-        print(f"   Codex:    已合并进 {codex_hooks_file()} 的 SessionStart")
+        print(f"   Codex:    已合并进 {codex_hooks_file()} 的 SessionStart/SubagentStart")
     else:
         print("   Codex:    未写入 fallback（Codex 0.137.0+ 使用插件 hooks/hooks.json）")
     if _target_includes(target, TARGET_COPILOT):
@@ -499,13 +535,20 @@ def cmd_uninstall(target):
     _remove_payload_if_unused()
     print(f"✅ 卸载完成：已从 {_target_label(target)} 精确移除本工具写入的配置。")
     if _target_includes(target, TARGET_CODEX_FALLBACK):
-        print("   注：Codex config.toml 的 [hooks.state] 残留条目无害（hash 对不上会被忽略），如需可手动清理含 session_start 的段。")
+        print("   注：Codex config.toml 的 [hooks.state] 残留条目无害（hash 对不上会被忽略），如需可手动清理含 session_start/subagent_start 的段。")
 
 
 def cmd_status(target):
     print(f"稳定位置:     {'已安装' if os.path.isdir(installed_hooks_dir()) else '未安装'}  ({installed_hooks_dir()})")
     if _target_includes(target, TARGET_CODEX_FALLBACK):
-        print(f"Codex fallback: {'已安装' if codex_status() else '未安装'}  ({codex_hooks_file()})")
+        installed_events = codex_installed_events()
+        if installed_events == list(CODEX_CONTEXT_HOOK_EVENTS):
+            label = "已安装"
+        elif installed_events:
+            label = "部分安装: " + ",".join(installed_events)
+        else:
+            label = "未安装"
+        print(f"Codex fallback: {label}  ({codex_hooks_file()})")
     if _target_includes(target, TARGET_COPILOT):
         cpath = copilot_instructions_file()
         broken = False
