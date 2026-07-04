@@ -82,13 +82,19 @@ Codex 可以通过插件系统加载本仓库的 skills，但自定义 reviewer 
 项目级安装，推荐用于单个仓库：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh | bash
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh
+bash "$script"
 ```
 
 用户级安装，所有仓库可用：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh | bash -s -- --scope user
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh
+bash "$script" --scope user
 ```
 
 本地仓库执行：
@@ -146,9 +152,12 @@ Windows 本地仓库里也提供了 `scripts/install-codex-agents.cmd` 和 `scri
 - **Copilot / 旧 Codex fallback**：安装脚本默认只写 Copilot personal instructions；旧 Codex 或明确需要 `~/.codex/hooks.json` 固定安装时，显式选择 fallback target。无需 clone 仓库：
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # Copilot（默认）
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # 自动判断旧 Codex fallback
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # 旧 Codex fallback
+  script="$(mktemp)"
+  trap 'rm -f "$script"' EXIT
+  curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh
+  bash "$script" install                                      # Copilot（默认）
+  bash "$script" install --target auto                        # 自动判断旧 Codex fallback
+  bash "$script" install --target codex-fallback              # 旧 Codex fallback
   ```
 
   Windows 改用 `install-project-context-hook.ps1` 安装脚本（见下方完整指引）。若已 clone 仓库，也可跑 `python3 hooks/install.py install`；旧 Codex fallback 可先试 `python3 hooks/install.py install --target auto`，确认旧版本或明确固定写入时用 `--target codex-fallback`。走 Codex fallback 安装后同样需启动 Codex 跑一次 `/hooks` 信任该 hook。

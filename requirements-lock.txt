@@ -1,0 +1,2 @@
+# Spellbook Skills has no Python package dependencies.
+# Python scripts in this repository use only the standard library.

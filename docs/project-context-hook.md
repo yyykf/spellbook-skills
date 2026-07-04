@@ -29,12 +29,15 @@ If you are still on an older Codex release that does not auto-load plugin hooks,
 **No clone required (macOS / Linux)** — the remote installer downloads `install.py` plus its payload into a temp dir and runs it. The default `install` writes Copilot instructions only; older Codex fallback must opt into the target:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # install Copilot (default)
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # auto-detect older Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # install older Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target all             # install Copilot + Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- uninstall                        # uninstall all
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- status
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh
+bash "$script" install                                      # install Copilot (default)
+bash "$script" install --target auto                        # auto-detect older Codex fallback
+bash "$script" install --target codex-fallback              # install older Codex fallback
+bash "$script" install --target all                         # install Copilot + Codex fallback
+bash "$script" uninstall                                    # uninstall all
+bash "$script" status
 ```
 
 **No clone required (Windows PowerShell)** — the `.ps1` installer does the same:
