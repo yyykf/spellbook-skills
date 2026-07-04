@@ -28,5 +28,5 @@ jobs:
           fail_on_severity: high
           format: sarif
           upload_sarif: true
-          cisco_skill_scan: auto
+          cisco_skill_scan: off
           submission_enabled: false
