@@ -29,12 +29,15 @@ Copilot 的 hook 仍有 compact 缺陷——用安装脚本把规则写入 perso
 **无需 clone 仓库（macOS / Linux）** —— 远程安装脚本会把 `install.py` 及其 payload 下载到临时目录后执行。默认 `install` 只写 Copilot instructions；旧 Codex fallback 必须显式选择 target：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # 安装 Copilot（默认）
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # 自动判断旧 Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # 安装旧 Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target all             # 同时安装 Copilot + Codex fallback
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- uninstall                        # 卸载全部
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- status
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh
+bash "$script" install                                      # 安装 Copilot（默认）
+bash "$script" install --target auto                        # 自动判断旧 Codex fallback
+bash "$script" install --target codex-fallback              # 安装旧 Codex fallback
+bash "$script" install --target all                         # 同时安装 Copilot + Codex fallback
+bash "$script" uninstall                                    # 卸载全部
+bash "$script" status
 ```
 
 **无需 clone 仓库（Windows PowerShell）** —— `.ps1` 安装脚本做同样的事：

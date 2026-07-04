@@ -16,8 +16,8 @@ Personal skills library for daily engineering workflows, packaged for multiple c
 
 | Platform | Manifest | Version Strategy |
 |---|---|---|
-| Claude Code | `.claude-plugin/plugin.json` | No version field, tracked by git SHA |
-| Codex | `.codex-plugin/plugin.json` | Semver required |
+| Claude Code | `.claude-plugin/plugin.json` | Semver required; kept aligned with Codex manifest |
+| Codex | `.codex-plugin/plugin.json` | Semver required; kept aligned with Claude manifest |
 
 ## Repository Layout
 
@@ -87,4 +87,4 @@ One-line summary.
 ./scripts/bump-version.sh --audit         # Check + grep repo for stale version strings
 ```
 
-Bump the Codex plugin version when adding or changing skills (minor for new skills, patch for fixes).
+Bump plugin manifest versions when adding or changing skills (minor for new skills, patch for fixes).

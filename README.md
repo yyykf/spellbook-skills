@@ -82,13 +82,19 @@ The installer uses only shell/PowerShell plus `curl` or `Invoke-WebRequest`; no 
 Project-scoped install, recommended for a single repository:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh | bash
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh
+bash "$script"
 ```
 
 User-scoped install, available across repositories:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh | bash -s -- --scope user
+script="$(mktemp)"
+trap 'rm -f "$script"' EXIT
+curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-codex-agents.sh
+bash "$script" --scope user
 ```
 
 From a local checkout:
@@ -146,9 +152,12 @@ An **optional** SessionStart/SubagentStart hook that injects framework-agnostic 
 - **Copilot / older Codex fallback**: the installer defaults to Copilot personal instructions only; older Codex releases, or setups that explicitly want `~/.codex/hooks.json`, should opt into the fallback target. No clone required:
 
   ```bash
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash                                      # Copilot (default)
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target auto            # auto-detect older Codex fallback
-  curl -fsSL https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh | bash -s -- install --target codex-fallback  # older Codex fallback
+  script="$(mktemp)"
+  trap 'rm -f "$script"' EXIT
+  curl -fsSLo "$script" https://raw.githubusercontent.com/yyykf/spellbook-skills/main/scripts/install-project-context-hook.sh
+  bash "$script" install                                      # Copilot (default)
+  bash "$script" install --target auto                        # auto-detect older Codex fallback
+  bash "$script" install --target codex-fallback              # older Codex fallback
   ```
 
   On Windows, use the `install-project-context-hook.ps1` installer instead (see the guide below). From a local checkout you can run `python3 hooks/install.py install`; for older Codex fallback you can first try `python3 hooks/install.py install --target auto`, or use `--target codex-fallback` when confirmed. For Codex fallback installs, start Codex afterward and run `/hooks` once to trust the hook.
