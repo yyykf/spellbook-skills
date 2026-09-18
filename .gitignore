@@ -6,3 +6,6 @@ skills/*-workspace/
 
 # Git worktrees
 .worktrees/
+
+# yapi-skill sync previews
+.yapi-sync/
