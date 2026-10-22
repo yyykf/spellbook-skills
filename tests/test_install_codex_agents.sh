@@ -33,6 +33,7 @@ run_project_install_copies_agents_under_project_codex_dir() {
   assert_file "$target/spellbook-code-quality-reviewer.toml"
   assert_file "$target/spellbook-code-reuse-reviewer.toml"
   assert_file "$target/spellbook-code-efficiency-reviewer.toml"
+  assert_file "$target/spellbook-code-altitude-reviewer.toml"
   assert_contains "$target/spellbook-code-quality-reviewer.toml" 'name = "spellbook-code-quality-reviewer"'
 }
 
@@ -45,6 +46,7 @@ run_user_install_respects_codex_home() {
   assert_file "$target/spellbook-code-quality-reviewer.toml"
   assert_file "$target/spellbook-code-reuse-reviewer.toml"
   assert_file "$target/spellbook-code-efficiency-reviewer.toml"
+  assert_file "$target/spellbook-code-altitude-reviewer.toml"
 }
 
 run_existing_files_are_not_overwritten_without_force() {

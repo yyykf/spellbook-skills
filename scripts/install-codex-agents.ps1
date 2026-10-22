@@ -17,7 +17,8 @@ $ErrorActionPreference = "Stop"
 $Files = @(
     "spellbook-code-quality-reviewer.toml",
     "spellbook-code-reuse-reviewer.toml",
-    "spellbook-code-efficiency-reviewer.toml"
+    "spellbook-code-efficiency-reviewer.toml",
+    "spellbook-code-altitude-reviewer.toml"
 )
 
 if ($Scope -eq "user") {
