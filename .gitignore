@@ -3,3 +3,9 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 skills/*-workspace/
+
+# Git worktrees
+.worktrees/
+
+# yapi-skill sync previews
+.yapi-sync/

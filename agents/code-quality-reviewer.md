@@ -1,6 +1,6 @@
 ---
 name: code-quality-reviewer
-description: Reviews code changes for quality issues — flags redundant state, parameter sprawl, copy-paste patterns, leaky abstractions, stringly-typed code, unnecessary nesting, and unhelpful comments.
+description: Reviews code changes for quality issues — flags redundant state, parameter sprawl, copy-paste patterns, leaky abstractions, stringly-typed code, unnecessary nesting, dead code, and unhelpful comments.
 model: sonnet
 tools: ["Read", "Glob", "Grep", "Bash"]
 ---
@@ -22,6 +22,8 @@ You will receive a git diff as context. Review every changed file in the diff.
 5. **Stringly-typed code**: using raw strings where constants, enums (string unions), or branded types already exist in the codebase
 6. **Unnecessary JSX nesting**: wrapper elements that add no layout value — check if inner component props already provide the needed behavior
 7. **Unnecessary comments**: comments explaining WHAT the code does (well-named identifiers already do that), narrating the change, or referencing the task/caller — delete; keep only non-obvious WHY (hidden constraints, subtle invariants, workarounds)
+8. **Deep nesting**: conditionals or loops nested several levels deep — flatten with early returns/guard clauses or extract a helper
+9. **Dead code left behind**: unused functions, variables, imports, branches, or flags the change orphaned — delete them
 
 ## Output Format
 
